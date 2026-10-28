@@ -420,9 +420,9 @@ sideColumn.append(modeLabel,modeSelect,setupPanel,setupActions,battleActions,bat
 const hudRotation=document.createElement('div');hudRotation.id='hudRotation';hudRotation.className='hud-rotation';hudRotation.innerHTML='<button type="button" data-turn="2" aria-label="選択した駒を時計回りに90度回転">↻<small>90°回転</small></button>';
 battleActions.insertBefore(hudRotation,$('undoAction'));
 const arenaAtmosphere=document.createElement('div');arenaAtmosphere.className='arena-atmosphere';arenaAtmosphere.setAttribute('aria-hidden','true');
-for(const [x,y] of [[9,5],[91,5],[10,37],[90,37],[10,78],[90,78],[24,94],[76,94]]{const e=document.createElement('span');e.className='arena-flame';e.style.left=x+'%';e.style.top=y+'%';arenaAtmosphere.append(e)}
-for(const [x,y] of [[13,13],[78,13],[3,65],[87,65]]{const e=document.createElement('span');e.className='arena-banner';e.style.left=x+'%';e.style.top=y+'%';arenaAtmosphere.append(e)}
-for(const [x,y] of [[1,13],[79,13],[1,83],[79,83]]{const e=document.createElement('span');e.className='arena-crowd';e.style.left=x+'%';e.style.top=y+'%';arenaAtmosphere.append(e)}
+for(const [x,y] of [[9,5],[91,5],[10,37],[90,37],[10,78],[90,78],[24,94],[76,94]]){const e=document.createElement('span');e.className='arena-flame';e.style.left=x+'%';e.style.top=y+'%';arenaAtmosphere.append(e)}
+for(const [x,y] of [[13,13],[78,13],[3,65],[87,65]]){const e=document.createElement('span');e.className='arena-banner';e.style.left=x+'%';e.style.top=y+'%';arenaAtmosphere.append(e)}
+for(const [x,y] of [[1,13],[79,13],[1,83],[79,83]]){const e=document.createElement('span');e.className='arena-crowd';e.style.left=x+'%';e.style.top=y+'%';arenaAtmosphere.append(e)}
 $('boardViewport').append(arenaAtmosphere);
 const pickerButton=document.createElement('button');pickerButton.id='mobilePicker';pickerButton.type='button';pickerButton.className='primary mobile-picker';pickerButton.textContent='🃏 キャラを選ぶ';boardColumn.append(pickerButton);
 const pickerClose=document.createElement('button');pickerClose.type='button';pickerClose.className='picker-close';pickerClose.textContent='✕ 閉じて盤面へ';setupPanel.insertBefore(pickerClose,setupPanel.firstChild);
