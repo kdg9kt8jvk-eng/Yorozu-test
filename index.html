@@ -263,6 +263,18 @@ body.battle-screen .game-board-column .zoom-note{display:none}
 }
 @media(max-width:850px){body.battle-screen .game-side-column>.actions .hud-rotation{grid-column:1/-1}body.battle-screen .hud-rotation button{aspect-ratio:auto;min-height:56px}}
 
+
+/* Match screen refinements: fill widescreen side gutters with matching arena art. */
+body.battle-screen .hud-rotation{grid-template-columns:1fr}
+body.battle-screen .hud-rotation button{aspect-ratio:auto!important;min-height:64px}
+@media(min-width:851px){
+ body.battle-screen .game-workspace{isolation:isolate}
+ body.battle-screen .game-workspace::before{content:"";position:absolute;inset:-30px;z-index:-1;background-image:var(--arena-image);background-position:center;background-size:cover;filter:blur(12px) brightness(.45);transform:scale(1.05);pointer-events:none}
+ body.battle-screen .game-board-column #boardViewport{position:relative;z-index:0}
+ body.battle-screen .game-board-column .board.has-arena-image .piece{transform:scale(1.13)!important;transform-origin:center!important;overflow:visible}
+ body.battle-screen .game-board-column .board.has-arena-image .piece .board-sticker{overflow:visible}
+}
+
 /* Composition board: show only the home-side 1.5 rows, without changing piece aspect ratios. */
 body.setup-screen .setup-stage-board #boardViewport{height:clamp(155px,15vw,215px);overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;border-radius:12px}
 body.setup-screen .setup-stage-board #board{width:max(100%,780px)!important;max-width:none!important;min-width:780px!important;aspect-ratio:1;flex:none}
@@ -329,7 +341,7 @@ const battleActions=setupActions.nextElementSibling;
 const battleMessage=battleActions.nextElementSibling;
 sideColumn.append(modeLabel,modeSelect,setupPanel,setupActions,battleActions,battleMessage,document.querySelector('.character-panel'));
 // Keep the existing rotation mechanic; relocate its controls into the battle HUD.
-const hudRotation=document.createElement('div');hudRotation.id='hudRotation';hudRotation.className='hud-rotation';hudRotation.innerHTML='<button type="button" data-turn="6" aria-label="左に90度回転">↶<small>左90°</small></button><button type="button" data-turn="2" aria-label="右に90度回転">↷<small>右90°</small></button>';
+const hudRotation=document.createElement('div');hudRotation.id='hudRotation';hudRotation.className='hud-rotation';hudRotation.innerHTML='<button type="button" data-turn="2" aria-label="選択した駒を時計回りに90度回転">↻<small>90°回転</small></button>';
 battleActions.insertBefore(hudRotation,$('undoAction'));
 const pickerButton=document.createElement('button');pickerButton.id='mobilePicker';pickerButton.type='button';pickerButton.className='primary mobile-picker';pickerButton.textContent='🃏 キャラを選ぶ';boardColumn.append(pickerButton);
 const pickerClose=document.createElement('button');pickerClose.type='button';pickerClose.className='picker-close';pickerClose.textContent='✕ 閉じて盤面へ';setupPanel.insertBefore(pickerClose,setupPanel.firstChild);
@@ -811,7 +823,7 @@ $('teamLoad').addEventListener('click',()=>{try{placeTeam(JSON.parse(localStorag
 $('teamShare').addEventListener('click',async()=>{try{const code=encodeTeam(currentTeam());$('teamCode').value=code;try{await navigator.clipboard.writeText(code);teamStatus('配置位置も含む共有コードを発行・コピーしました')}catch(e){teamStatus('配置位置も含む共有コードを発行しました。入力欄からコピーしてください')}}catch(e){teamStatus(e.message)}});
 $('teamImport').addEventListener('click',()=>{try{placeTeam(decodeTeam($('teamCode').value))}catch(e){teamStatus(e.message)}});
 const ARENA_KEY='yorozumon-arena-v1';
-function applyArenaImage(){let value='images/arena-background.png';try{value=localStorage.getItem(ARENA_KEY)||value}catch(e){}const board=$('board');board.classList.toggle('has-arena-image',!!value);if(value)board.style.setProperty('--arena-image','url("'+value+'")');else board.style.removeProperty('--arena-image')}
+function applyArenaImage(){let value='images/arena-background.png';try{value=localStorage.getItem(ARENA_KEY)||value}catch(e){}const board=$('board');board.classList.toggle('has-arena-image',!!value);if(value){board.style.setProperty('--arena-image','url("'+value+'")');workspace.style.setProperty('--arena-image','url("'+value+'")')}else{board.style.removeProperty('--arena-image');workspace.style.removeProperty('--arena-image')}}
 $('arenaUpload').addEventListener('change',event=>{const file=event.target.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type)){say('PNG・JPEG・WebP画像を選んでください');return}const reader=new FileReader();reader.onload=()=>{try{localStorage.setItem(ARENA_KEY,reader.result);applyArenaImage();say('闘技場背景を設定しました（この端末に保存）')}catch(e){say('画像が大きすぎて保存できません。小さな画像をお試しください')}};reader.readAsDataURL(file)});
 $('arenaClear').addEventListener('click',()=>{try{localStorage.removeItem(ARENA_KEY)}catch(e){}applyArenaImage();say('闘技場背景を標準に戻しました')});
 applyArenaImage();
