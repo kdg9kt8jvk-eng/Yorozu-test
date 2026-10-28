@@ -303,7 +303,7 @@ $('coinContinue').addEventListener('click',()=>{
  if(isCpuMode()&&side==='b')startCpu();
 });
 function finishSetup(){matchRoster=['r','b'].map(s=>({side:s,ids:setupPlaced[s].map(p=>p.type)}));matchRecorded=false;matchStats={r:{damage:0,kills:0},b:{damage:0,kills:0}};actionHistory=[];logAction('⚔️ 対戦開始','turn');phase='battle';side='r';selected=null;ap=0;rolled=false;say('コイントスで先攻を決めます！');render();tossCoin()}
-function setupConfirm(){const list=setupPlaced[setupSide];if(list.length!==4||list.filter(p=>isKing(p)).length!==1||new Set(list.map(p=>p.type)).size!==4){say('王1体＋通常キャラ3体を配置してください');return}if(setupSide==='r'){setupSide='b';setupChoice=ROSTER.find(c=>c.role==='キング').id;if(isCpuMode()){[ROSTER.find(c=>c.role==='キング'),...ROSTER.filter(c=>c.role!=='キング').slice(0,3)].forEach((c,i)=>{const p=makePiece('b',c.id,0,i+1);pieces.push(p);setupPlaced.b.push(p)});finishSetup()}else{say('🔵 青軍の配置を始めてください');render()}}else finishSetup()}
+function setupConfirm(){const list=setupPlaced[setupSide];if(list.length!==4||list.filter(p=>isKing(p)).length!==1||new Set(list.map(p=>p.type)).size!==4){say('王1体＋通常キャラ3体を配置してください');return}if(setupSide==='r'){setupSide='b';setupChoice=ROSTER.find(c=>c.role==='キング').id;if(isCpuMode()){(()=>{const kings=ROSTER.filter(c=>c.role==='キング');const king=kings[Math.floor(Math.random()*kings.length)];const pool=ROSTER.filter(c=>c.role!=='キング');const same=pool.filter(c=>c.attribute===king.attribute).sort(()=>Math.random()-.5);const others=pool.filter(c=>c.attribute!==king.attribute).sort(()=>Math.random()-.5);const count=Math.random()<.72?Math.min(3,same.length):Math.floor(Math.random()*Math.min(4,same.length+1));return [king,...same.slice(0,count),...others.slice(0,3-count)]})().forEach((c,i)=>{const p=makePiece('b',c.id,0,i+1);pieces.push(p);setupPlaced.b.push(p)});finishSetup()}else{say('🔵 青軍の配置を始めてください');render()}}else finishSetup()}
 let draftSearch='',draftAttribute='',draftRole='',draftSort='default';
 function renderSetup(){const active=phase==='setup';$('setupPanel').hidden=!active;$('mobilePicker').hidden=!active;if(!active)closeMobilePicker();if(!active)return;const list=setupPlaced[setupSide],hasKing=list.some(isKing);$('setupTitle').textContent=(setupSide==='r'?'🔴 赤軍':'🔵 青軍')+'の編成 '+list.length+'/4';$('setupHelp').textContent=list.length===4?'4体配置完了。配置を確定してください':hasKing?'通常キャラを選んで自陣最前列へ配置':'キングを選んで自陣最前列へ配置';
 const attr=$('draftAttribute'),attrs=[...new Set(ROSTER.map(c=>c.attribute))].sort((a,b)=>a.localeCompare(b,'ja'));if(attr.options.length!==attrs.length+1){attr.replaceChildren();const any=document.createElement('option');any.value='';any.textContent='全属性';attr.append(any);for(const name of attrs){const o=document.createElement('option');o.value=name;o.textContent=name;attr.append(o)}}attr.value=draftAttribute;$('draftSearch').value=draftSearch;$('draftRole').value=draftRole;$('draftSort').value=draftSort;
@@ -415,9 +415,26 @@ function moveOptions(p){
    if(goal.r&&ownKing&&cpuDistance(dest,ownKing)>0)score-=20;
    if(cpuLevel()>=2){const nearbyThreat=threats.reduce((sum,e)=>sum+Math.max(0,val(e,direction(e,r,c))),0);score-=nearbyThreat*(cpuLevel()===3?23:12);if(r>=4&&nearbyThreat===0)score+=cpuLevel()===3?45:20;}
   }
+  // Defend against imminent king breakthrough and avoid exposing wounded units.
+  if(!isRoyal&&enemyKing){
+   if(goal.r){const oldDist=cpuDistance(old,enemyKing),newDist=cpuDistance(dest,enemyKing);score+=(oldDist-newDist)*55;if(newDist===1)score+=150;if(newDist>oldDist)score-=80}
+   else if(enemyKing.r>=3){score+=(cpuDistance(old,enemyKing)-cpuDistance(dest,enemyKing))*15}
+  }
+  const danger=enemies.filter(q=>cpuDistance(dest,q)===1&&val(q,direction(q,r,c))>0);
+  const oldDanger=enemies.filter(q=>cpuDistance(old,q)===1&&val(q,direction(q,old.r,old.c))>0);
+  if(p.hp<=2&&!isRoyal){score-=danger.length*55;score+=Math.max(0,oldDanger.length-danger.length)*45}
+  if(!isRoyal&&p.hp<=1&&danger.length)score-=110;
+  // Position a support piece so another ally can leap over it on a later action.
+  if(!isRoyal){for(const ally of pieces.filter(q=>q.side==='b'&&q!==p&&!q.moved)){
+   const dr=r-ally.r,dc=c-ally.c,dist=Math.max(Math.abs(dr),Math.abs(dc));
+   if(dist>=1&&dist<=3&&(dr===0||dc===0||Math.abs(dr)===Math.abs(dc))){
+    const stepR=Math.sign(dr),stepC=Math.sign(dc),landing={r:r+stepR,c:c+stepC};
+    if(inside(landing.r,landing.c)&&!at(landing.r,landing.c)&&val(ally,direction(ally,r,c))>=dist+1&&ap>=dist+1)score+=16;
+   }
+  }}
   const nearby=enemies.filter(q=>cpuDistance(dest,q)===1);
   if(!p.attacked&&nearby.length)score+=nearby.reduce((best,q)=>Math.max(best,q.hp<=2?19:10),0);
-  if(ownKing&&goal==='r'&&!isRoyal){const redKing=enemyKing;if(redKing&&cpuDistance(dest,redKing)===1)score+=100}
+  if(ownKing&&goal.r&&!isRoyal){const redKing=enemyKing;if(redKing&&cpuDistance(dest,redKing)===1)score+=100}
   if(cpuLevel()>=2&&enemyKing&&enemyKing.r>=3&&!isRoyal){const oldDist=cpuDistance(old,enemyKing),newDist=cpuDistance(dest,enemyKing);score+=(oldDist-newDist)*(cpuLevel()===3?22:12);if(newDist===1)score+=cpuLevel()===3?85:42;if(newDist>oldDist)score-=20}
   if(cpuLevel()>=3&&!isRoyal){const danger=enemies.filter(q=>cpuDistance(dest,q)===1).reduce((n,q)=>n+Math.max(0,val(q,direction(q,r,c))),0);score-=danger*9;const allies=pieces.filter(q=>q.side==='b'&&q!==p&&BASE[q.type].attribute===BASE[p.type].attribute);if(enemies.some(q=>allies.some(a=>{const dr=q.r-r,dc=q.c-c;return Math.max(Math.abs(dr),Math.abs(dc))===1&&a.r===q.r+dr&&a.c===q.c+dc})))score+=35}
   if(enemies.some(q=>cpuDistance(dest,q)===1&&val(q,direction(q,r,c))>=p.hp))score-=isRoyal?120:18;
@@ -442,7 +459,7 @@ function cpuAct(a){
 }
 function startCpu(){cpuBusy=true;tossDie(true)}
 function runCpuActions(){
- if(rotationAvailable){const candidates=pieces.filter(p=>p.side==='b');let best=null;for(const p of candidates){for(const steps of [2,4,6]){const old=p.rotation||0;p.rotation=(old+steps)%8;const score=DIRS.reduce((sum,_,i)=>sum+Math.max(0,val(p,i)-p.usedDirs[i])*(i===5?2:1),0);p.rotation=old;if(!best||score>best.score)best={p,steps,score}}}if(best){rotatePiece(best.p,best.steps);logAction('🤖 '+BASE[best.p.type].name+'を回転');say('🤖 CPU：'+BASE[best.p.type].name+'を回転！')}}
+ if(rotationAvailable){const candidates=pieces.filter(p=>p.side==='b');let best=null;for(const p of candidates){const baseline=[...attackOptions(p),...moveOptions(p)].reduce((v,a)=>Math.max(v,a.score),-100);for(const steps of [2,4,6]){const old=p.rotation||0;p.rotation=(old+steps)%8;const options=[...attackOptions(p),...moveOptions(p)];const improved=options.reduce((v,a)=>Math.max(v,a.score),-100);p.rotation=old;const gain=improved-baseline;if(gain>12&&(!best||gain>best.gain))best={p,steps,gain}}}if(best){rotatePiece(best.p,best.steps);logAction('🤖 '+BASE[best.p.type].name+'を戦術回転');say('🤖 CPU：有利な行動のために回転！')}}
  let steps=0;
  async function step(){
   if(winner){cpuBusy=false;render();return}
