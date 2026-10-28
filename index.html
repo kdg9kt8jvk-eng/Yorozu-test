@@ -392,6 +392,36 @@ function cpuScoreAttack(p,q,spend){
  if(q.hp<=2&&kill)score+=18;
  return score;
 }
+// Breakthrough is a terminal threat, not an ordinary positional preference.
+function cpuBreakthroughThreat(){
+ const king=pieces.find(x=>x.side==='r'&&isKing(x));
+ if(!king)return null;
+ return {king,urgent:!!goal.r||king.r===0,critical:king.r<=1,near:king.r<=2};
+}
+function cpuEmergencyScore(a){
+ const t=cpuBreakthroughThreat();if(!t||!t.near)return a.score;
+ const k=t.king,urgent=t.urgent,critical=t.critical;
+ if(a.kind==='attack'){
+  if(a.r===k.r&&a.c===k.c){
+   const total=a.spend+(aura(a.p)?1:0)+(flank(a.p,k)?1:0);
+   return a.score+(total>=k.hp?100000:urgent?2800:critical?1100:300);
+  }
+  return a.score-(urgent?2400:critical?350:35);
+ }
+ const before=cpuDistance(a.p,k),after=cpuDistance({r:a.r,c:a.c},k);
+ let score=a.score;
+ if(isKing(a.p)){
+  // Do not sacrifice the defending king's safety to chase a competing breakthrough.
+  return score-(urgent?2300:critical?450:0);
+ }
+ score+=(before-after)*(urgent?320:critical?120:25);
+ if(after===1)score+=urgent?1000:critical?350:70;
+ if(urgent&&after>before)score-=2400;
+ if(critical&&after>before)score-=450;
+ // Move toward the row where the red king must survive, rather than unrelated skirmishes.
+ if(critical&&a.r<=1)score+=urgent?150:65;
+ return score;
+}
 function attackOptions(p){const out=[];for(const q of pieces){if(q.side===p.side||!can(p,q.r,q.c,'attack'))continue;const max=Math.min(ap,attackLimit(p,direction(p,q.r,q.c)));for(let spend=1;spend<=max;spend++)out.push({kind:'attack',p,r:q.r,c:q.c,spend,score:cpuScoreAttack(p,q,spend)})}return out}
 function moveOptions(p){
  const out=[],enemyKing=pieces.find(q=>q.side==='r'&&isKing(q)),ownKing=pieces.find(q=>q.side==='b'&&isKing(q)),enemies=pieces.filter(q=>q.side==='r');
@@ -459,16 +489,21 @@ function cpuAct(a){
 }
 function startCpu(){cpuBusy=true;tossDie(true)}
 function runCpuActions(){
- if(rotationAvailable){const candidates=pieces.filter(p=>p.side==='b');let best=null;for(const p of candidates){const baseline=[...attackOptions(p),...moveOptions(p)].reduce((v,a)=>Math.max(v,a.score),-100);for(const steps of [2,4,6]){const old=p.rotation||0;p.rotation=(old+steps)%8;const options=[...attackOptions(p),...moveOptions(p)];const improved=options.reduce((v,a)=>Math.max(v,a.score),-100);p.rotation=old;const gain=improved-baseline;if(gain>12&&(!best||gain>best.gain))best={p,steps,gain}}}if(best){rotatePiece(best.p,best.steps);logAction('🤖 '+BASE[best.p.type].name+'を戦術回転');say('🤖 CPU：有利な行動のために回転！')}}
+ if(rotationAvailable){const candidates=pieces.filter(p=>p.side==='b');let best=null;for(const p of candidates){const baseline=[...attackOptions(p),...moveOptions(p)].reduce((v,a)=>Math.max(v,cpuEmergencyScore(a)),-100);for(const steps of [2,4,6]){const old=p.rotation||0;p.rotation=(old+steps)%8;const options=[...attackOptions(p),...moveOptions(p)];const improved=options.reduce((v,a)=>Math.max(v,cpuEmergencyScore(a)),-100);p.rotation=old;const gain=improved-baseline;if(gain>12&&(!best||gain>best.gain))best={p,steps,gain}}}if(best){rotatePiece(best.p,best.steps);logAction('🤖 '+BASE[best.p.type].name+'を戦術回転');say('🤖 CPU：有利な行動のために回転！')}}
  let steps=0;
  async function step(){
   if(winner){cpuBusy=false;render();return}
   if(steps++>18||ap<1){cpuBusy=false;nextTurn();return}
   const actions=[];for(const p of pieces.filter(x=>x.side==='b')){actions.push(...attackOptions(p),...moveOptions(p))}
   if(!actions.length){cpuBusy=false;nextTurn();return}
+  const threat=cpuBreakthroughThreat();
+  if(threat?.near){
+   for(const a of actions)a.score=cpuEmergencyScore(a);
+   if(threat.urgent)logAction('🤖 敵王の突破を阻止するため迎撃優先');
+  }
   actions.sort((a,b)=>b.score-a.score);
   const pick=cpuLevel()===1&&actions.length>1&&Math.random()<.28?actions[Math.min(actions.length-1,1+Math.floor(Math.random()*Math.min(3,actions.length-1)))]:actions[0];
-  if(pick.score < (cpuLevel()===1?-1:-12) && steps>1){cpuBusy=false;nextTurn();return}
+  if(!threat?.urgent&&pick.score < (cpuLevel()===1?-1:-12) && steps>1){cpuBusy=false;nextTurn();return}
   await cpuAct(pick);
   setTimeout(step,240);
  }
