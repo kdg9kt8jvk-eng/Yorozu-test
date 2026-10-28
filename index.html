@@ -465,7 +465,7 @@ function applyRoster(next){validateRoster(next);localStorage.setItem(STORAGE_KEY
 try{const saved=localStorage.getItem(STORAGE_KEY);if(saved){const parsed=JSON.parse(saved);validateRoster(parsed);// Keep browser-local stat edits while adding newly published characters and official attribute changes.
 const officialAttributes={'三枚目のジョーカー':'トランプ','ど根性バルクボディ':'獣人','無冠のワンダ':'王族','風来坊ノクスターン':'風','お尋ねモンク':'猿人','気まぐれリリス':'悪魔','月詠みルナルミア':'月'};
 const storedById=new Map(parsed.map(c=>[c.id,c]));
-ROSTER=ORIGINAL.map(c=>{const local=storedById.get(c.id);return local?{...c,...local,attribute:officialAttributes[c.name]||local.attribute}:c}).concat(parsed.filter(c=>!ORIGINAL.some(o=>o.id===c.id)));
+ROSTER=ORIGINAL.map(c=>{const local=storedById.get(c.id);return local?{...c,...local,attribute:c.name==='Mr.ジェイド'?'鉱石':officialAttributes[c.name]||local.attribute}:c}).concat(parsed.filter(c=>!ORIGINAL.some(o=>o.id===c.id)&&!['YM055','YM064'].includes(c.id)));
 validateRoster(ROSTER);syncRoster();localStorage.setItem(STORAGE_KEY,JSON.stringify(ROSTER))}}catch(e){statusManager('保存データを読み込めず、初期データを使用中：'+e.message)}
 for(const [id,key] of [['draftSearch','draftSearch'],['draftAttribute','draftAttribute'],['draftRole','draftRole'],['draftSort','draftSort']]){$(id).addEventListener(id==='draftSearch'?'input':'change',e=>{if(key==='draftSearch')draftSearch=e.target.value;if(key==='draftAttribute')draftAttribute=e.target.value;if(key==='draftRole')draftRole=e.target.value;if(key==='draftSort')draftSort=e.target.value;renderSetup()})}
 $('managerToggle').addEventListener('click',()=>{$('managerPanel').hidden=!$('managerPanel').hidden;if(!$('managerPanel').hidden){editingId=ROSTER[0]?.id||null;drawManager()}});
