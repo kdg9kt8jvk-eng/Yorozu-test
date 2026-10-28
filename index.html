@@ -372,7 +372,7 @@ function syncSetupStage(){
   const nodes=[['boardViewport','setup-stage-board'],['draftImage','setup-stage-preview'],['setupPanel','setup-stage-side'],['setupRoster','setup-stage-roster']];
   for(const [id,cls] of nodes){const node=$(id),anchor=document.createComment('restore-'+id);node.parentNode.insertBefore(anchor,node);setupStageAnchors.push([node,anchor]);const cell=document.createElement('div');cell.className=cls;cell.append(node);setupStage.append(cell)}
   const preview=$('draftPreview');const a=document.createComment('restore-draftPreview');preview.parentNode.insertBefore(a,preview);setupStageAnchors.push([preview,a]);setupStage.querySelector('.setup-stage-preview').append(preview);
-  const main=document.querySelector('main.app');main.insertBefore(setupStage,main.querySelector('.spread.labels')||main.firstElementChild);
+  const main=document.querySelector('main.app');main.insertBefore(setupStage,workspace);
  }else if(!active&&setupStage){for(const [node,anchor] of setupStageAnchors){anchor.parentNode.insertBefore(node,anchor);anchor.remove()}setupStageAnchors=[];setupStage.remove();setupStage=null}
 }
 function renderSetup(){syncSetupStage();document.body.classList.toggle('battle-screen',phase==='battle');const active=phase==='setup';$('setupPanel').hidden=!active;$('mobilePicker').hidden=!active;if(!active)closeMobilePicker();if(!active)return;const list=setupPlaced[setupSide],hasKing=list.some(isKing);$('setupTitle').textContent=(setupSide==='r'?'🔴 赤軍':'🔵 青軍')+'の編成 '+list.length+'/4';$('setupHelp').textContent=list.length===4?'4体配置完了。配置を確定してください':hasKing?'通常キャラを選んで自陣最前列へ配置':'キングを選んで自陣最前列へ配置';
