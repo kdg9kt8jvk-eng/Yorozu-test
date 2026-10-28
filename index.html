@@ -271,7 +271,8 @@ body.battle-screen .hud-rotation button{aspect-ratio:auto!important;min-height:6
  body.battle-screen .game-workspace{isolation:isolate}
  body.battle-screen .game-workspace::before{content:"";position:absolute;inset:-30px;z-index:-1;background-image:var(--arena-image);background-position:center;background-size:cover;filter:blur(12px) brightness(.45);transform:scale(1.05);pointer-events:none}
  body.battle-screen .game-board-column #boardViewport{position:relative;z-index:0}
- body.battle-screen .game-board-column .board.has-arena-image .piece{transform:scale(.98)!important;transform-origin:center!important;overflow:hidden}
+ body.battle-screen .game-board-column .board.has-arena-image{transform:scale(1.13)!important;transform-origin:center center!important}
+ body.battle-screen .game-board-column .board.has-arena-image .piece{transform:scale(1)!important;transform-origin:center!important;overflow:hidden}
  body.battle-screen .game-board-column .board.has-arena-image .piece .board-sticker{overflow:hidden}
 }
 
