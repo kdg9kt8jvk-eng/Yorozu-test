@@ -214,6 +214,23 @@ body.battle-screen .zoom-viewport{max-width:none}
 }
 @media(max-width:700px){body.battle-screen header{display:none!important}}
 
+
+/* Battle arena layout v2: a distinct, board-first match screen. */
+body.battle-screen .game-workspace{display:grid!important;grid-template-columns:minmax(0,1.75fr) minmax(270px,.65fr)!important;gap:18px!important;align-items:start;margin:8px auto 22px;width:100%}
+body.battle-screen .game-board-column{min-width:0;background:radial-gradient(ellipse at 50% 20%,#493d30 0%,#201c1c 70%);border:2px solid #987646;border-radius:18px;padding:12px;box-shadow:0 12px 40px #0009,inset 0 0 0 2px #473721}
+body.battle-screen .game-board-column::before{content:"⚔ BATTLE ARENA ⚔";display:block;text-align:center;color:#f4d28b;font-weight:900;letter-spacing:.24em;font-size:clamp(15px,2vw,25px);padding:6px 0 12px;text-shadow:0 2px 7px #000}
+body.battle-screen .game-board-column #boardViewport{width:100%;margin:0 auto;max-width:100%;border-radius:9px}
+body.battle-screen .game-board-column #board{max-width:100%;margin:auto}
+body.battle-screen .game-side-column{min-width:0;display:flex;flex-direction:column;gap:12px}
+body.battle-screen .game-side-column>.spread{background:#30261f;border:1px solid #ad874e;border-radius:12px;padding:12px;color:#ffe1a4;font-size:17px}
+body.battle-screen .game-side-column>.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+body.battle-screen .game-side-column>.actions #roll{grid-column:1/-1;min-height:54px;font-size:19px;font-weight:900}
+body.battle-screen .game-side-column>#msg{margin:0;padding:12px;background:#222029;border-left:4px solid #d8a34d;border-radius:8px}
+body.battle-screen .character-panel{margin:0;min-width:0}
+body.battle-screen .game-board-column .arena-controls{opacity:.75}
+body.battle-screen .game-board-column .zoom-note{display:none}
+@media(max-width:850px){body.battle-screen .game-workspace{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}body.battle-screen .game-board-column{padding:5px;border-radius:10px}body.battle-screen .game-board-column::before{font-size:15px;padding:7px 0}body.battle-screen .game-side-column{gap:9px}body.battle-screen .game-side-column>.actions{grid-template-columns:repeat(3,minmax(0,1fr))}body.battle-screen .game-side-column>.actions #roll{grid-column:auto;min-height:46px;font-size:15px}}
+
 /* Composition board: show only the home-side 1.5 rows, without changing piece aspect ratios. */
 body.setup-screen .setup-stage-board #boardViewport{height:clamp(155px,15vw,215px);overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;border-radius:12px}
 body.setup-screen .setup-stage-board #board{width:max(100%,780px)!important;max-width:none!important;min-width:780px!important;aspect-ratio:1;flex:none}
