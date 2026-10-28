@@ -392,7 +392,7 @@ function syncSetupStage(){
    cells[destinations[id]].append(node);
   }
   const main=document.querySelector('main.app');
-  main.insertBefore(stage,main.querySelector('.spread')||main.firstElementChild);
+  main.insertBefore(stage,main.querySelector('header')?.nextSibling || null);
   setupStage=stage;setupStageAnchors=anchors;
  }else if(!active&&setupStage){
   for(const [node,anchor] of [...setupStageAnchors].reverse()){
