@@ -422,6 +422,57 @@ function cpuEmergencyScore(a){
  if(critical&&a.r<=1)score+=urgent?150:65;
  return score;
 }
+// Estimate opponent's next-turn attacks and ally follow-ups without mutating the board.
+function cpuTacticalScore(a){
+ let score=cpuEmergencyScore(a);
+ const red=pieces.filter(x=>x.side==='r'),blue=pieces.filter(x=>x.side==='b');
+ const redKing=red.find(isKing),blueKing=blue.find(isKing);
+ if(a.kind==='attack'){
+  const target=red.find(q=>q.r===a.r&&q.c===a.c);
+  if(!target)return score;
+  const bonus=(a.p.attacked?0:(aura(a.p)?1:0)+(flank(a.p,target)?1:0));
+  const dealt=a.spend+bonus;
+  if(dealt>target.hp)score-=(dealt-target.hp)*7;
+  if(dealt>=target.hp)score+=target===redKing?100000:55;
+  if(target===redKing&&goal.r)score+=800;
+  return score;
+ }
+ const old={r:a.p.r,c:a.p.c},dest={r:a.r,c:a.c};
+ const attackers=red.filter(q=>cpuDistance(q,dest)===1&&val(q,direction(q,dest.r,dest.c))>0);
+ const incoming=attackers.reduce((n,q)=>n+Math.max(1,val(q,direction(q,dest.r,dest.c))),0);
+ if(incoming>=a.p.hp)score-=isKing(a.p)?2200:120;
+ else score-=incoming*(isKing(a.p)?50:a.p.hp<=2?22:7);
+ if(blueKing&&a.p!==blueKing&&cpuDistance(dest,blueKing)===1)score+=18;
+ if(redKing){
+  // Threatened breakthrough: only reward a move if it can actually block,
+  // attack, or enable another defender to reach the invading king.
+  if(redKing.r<=1){
+   const dist=cpuDistance(dest,redKing);
+   const i=direction({r:dest.r,c:dest.c},redKing.r,redKing.c);
+   const canHit=dist===1&&i>=0&&val(a.p,i)>0;
+   if(canHit)score+=goal.r?1800:420;
+   else if(goal.r)score-=850;
+  }
+ }
+ // Evaluate whether moving this unit creates a concrete follow-up attack.
+ if(ap>a.cost){
+  const available=ap-a.cost;
+  for(const ally of blue){
+   if(ally===a.p||ally.attacked)continue;
+   for(const target of red){
+    const dir=direction(ally,target.r,target.c);
+    if(dir<0||cpuDistance(ally,target)!==1||val(ally,dir)<1)continue;
+    if(target.hp<=available+(aura(ally)?1:0))score+=target===redKing?500:35;
+   }
+  }
+ }
+ // Penalize aimless movement when the opponent is threatening victory.
+ if(redKing&&redKing.r<=2&&a.p!==blueKing){
+  const before=cpuDistance(old,redKing),after=cpuDistance(dest,redKing);
+  if(after>before)score-=(redKing.r===0?3500:redKing.r===1?500:90);
+ }
+ return score;
+}
 function attackOptions(p){const out=[];for(const q of pieces){if(q.side===p.side||!can(p,q.r,q.c,'attack'))continue;const max=Math.min(ap,attackLimit(p,direction(p,q.r,q.c)));for(let spend=1;spend<=max;spend++)out.push({kind:'attack',p,r:q.r,c:q.c,spend,score:cpuScoreAttack(p,q,spend)})}return out}
 function moveOptions(p){
  const out=[],enemyKing=pieces.find(q=>q.side==='r'&&isKing(q)),ownKing=pieces.find(q=>q.side==='b'&&isKing(q)),enemies=pieces.filter(q=>q.side==='r');
@@ -489,7 +540,7 @@ function cpuAct(a){
 }
 function startCpu(){cpuBusy=true;tossDie(true)}
 function runCpuActions(){
- if(rotationAvailable){const candidates=pieces.filter(p=>p.side==='b');let best=null;for(const p of candidates){const baseline=[...attackOptions(p),...moveOptions(p)].reduce((v,a)=>Math.max(v,cpuEmergencyScore(a)),-100);for(const steps of [2,4,6]){const old=p.rotation||0;p.rotation=(old+steps)%8;const options=[...attackOptions(p),...moveOptions(p)];const improved=options.reduce((v,a)=>Math.max(v,cpuEmergencyScore(a)),-100);p.rotation=old;const gain=improved-baseline;if(gain>12&&(!best||gain>best.gain))best={p,steps,gain}}}if(best){rotatePiece(best.p,best.steps);logAction('🤖 '+BASE[best.p.type].name+'を戦術回転');say('🤖 CPU：有利な行動のために回転！')}}
+ if(rotationAvailable){const candidates=pieces.filter(p=>p.side==='b');let best=null;for(const p of candidates){const baseline=[...attackOptions(p),...moveOptions(p)].reduce((v,a)=>Math.max(v,cpuTacticalScore(a)),-100);for(const steps of [2,4,6]){const old=p.rotation||0;p.rotation=(old+steps)%8;const options=[...attackOptions(p),...moveOptions(p)];const improved=options.reduce((v,a)=>Math.max(v,cpuTacticalScore(a)),-100);p.rotation=old;const gain=improved-baseline;if(gain>12&&(!best||gain>best.gain))best={p,steps,gain}}}if(best){rotatePiece(best.p,best.steps);logAction('🤖 '+BASE[best.p.type].name+'を戦術回転');say('🤖 CPU：有利な行動のために回転！')}}
  let steps=0;
  async function step(){
   if(winner){cpuBusy=false;render();return}
@@ -497,10 +548,8 @@ function runCpuActions(){
   const actions=[];for(const p of pieces.filter(x=>x.side==='b')){actions.push(...attackOptions(p),...moveOptions(p))}
   if(!actions.length){cpuBusy=false;nextTurn();return}
   const threat=cpuBreakthroughThreat();
-  if(threat?.near){
-   for(const a of actions)a.score=cpuEmergencyScore(a);
-   if(threat.urgent)logAction('🤖 敵王の突破を阻止するため迎撃優先');
-  }
+  for(const a of actions)a.score=cpuTacticalScore(a);
+  if(threat?.urgent&&steps===1)logAction('🤖 敵王の突破を阻止するため迎撃優先');
   actions.sort((a,b)=>b.score-a.score);
   const pick=cpuLevel()===1&&actions.length>1&&Math.random()<.28?actions[Math.min(actions.length-1,1+Math.floor(Math.random()*Math.min(3,actions.length-1)))]:actions[0];
   if(!threat?.urgent&&pick.score < (cpuLevel()===1?-1:-12) && steps>1){cpuBusy=false;nextTurn();return}
