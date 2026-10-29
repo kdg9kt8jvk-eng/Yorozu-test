@@ -552,6 +552,33 @@ body.battle-screen .arena-atmosphere{display:none!important}
   border-color:#f69a87!important;color:#fff!important;font-weight:900!important
  }
 }
+/* Mobile roster: picture and compact stats on top, full name below. */
+@media(max-width:700px){
+ body.setup-screen .setup-stage-roster #setupRoster .draft-card{
+  display:grid!important;grid-template-columns:72px minmax(0,1fr)!important;
+  grid-template-rows:72px auto!important;align-items:center!important;
+  column-gap:7px!important;row-gap:5px!important;min-width:165px!important;
+  flex-basis:165px!important;white-space:normal!important;overflow:hidden!important
+ }
+ body.setup-screen .setup-stage-roster #setupRoster .draft-card img{
+  grid-column:1!important;grid-row:1!important;float:none!important;
+  width:72px!important;height:72px!important;margin:0!important
+ }
+ body.setup-screen .setup-stage-roster #setupRoster .draft-card>span{
+  grid-column:2!important;grid-row:1!important;min-width:0!important;
+  font-size:12px!important;line-height:1.5!important;overflow-wrap:anywhere!important
+ }
+ body.setup-screen .setup-stage-roster #setupRoster .draft-card>strong{
+  grid-column:1/-1!important;grid-row:2!important;display:block!important;
+  font-size:12px!important;line-height:1.35!important;overflow-wrap:anywhere!important
+ }
+ /* Keep the battle image square, and eliminate the empty title/header gap. */
+ body.battle-screen .game-board-column{padding-top:0!important}
+ body.battle-screen .game-board-column::before{display:none!important;content:none!important}
+ body.battle-screen .game-board-column .spread.labels{display:none!important}
+ body.battle-screen .game-board-column #boardViewport{margin-top:0!important}
+ body.battle-screen .game-side-column>.spread{position:relative!important}
+}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
@@ -744,7 +771,7 @@ const attr=$('draftAttribute'),attrs=[...new Set(ROSTER.map(c=>c.attribute))].so
 const slots=$('draftSlots');slots.replaceChildren();for(const p of list){const button=document.createElement('button');button.textContent=(isKing(p)?'👑 ':'⚔️ ')+BASE[p.type].name+' ×';button.title='最後に配置した駒のみ戻せます';button.disabled=p!==list[list.length-1];button.addEventListener('click',setupRemoveLast);slots.append(button)}
 const roster=$('setupRoster');roster.replaceChildren();
 if((!hasKing&&draftRole&&draftRole!=='キング')||(hasKing&&draftRole==='キング')){draftRole='';$('draftRole').value=''}
-let visible=ROSTER.filter(c=>(!hasKing?c.role==='キング':c.role!=='キング')&&!list.some(p=>p.type===c.id)&&list.length<4&&(!draftSearch||c.name.toLowerCase().includes(draftSearch.toLowerCase()))&&(!draftAttribute||c.attribute===draftAttribute)&&(!draftRole||c.role===draftRole));if(draftSort==='hp')visible.sort((a,b)=>b.hp-a.hp);if(draftSort==='power')visible.sort((a,b)=>b.d.reduce((x,y)=>x+y,0)-a.d.reduce((x,y)=>x+y,0));for(const c of visible){const button=document.createElement('button');button.className='draft-card'+(setupChoice===c.id?' active':'');const disabled=false;button.disabled=disabled;const strong=document.createElement('strong');strong.textContent=(c.role==='キング'?'👑 ':'')+c.name;const info=document.createElement('span');info.textContent=c.attribute+'｜'+c.role+'｜HP'+c.hp;button.append(strong,info);button.addEventListener('click',()=>{setupChoice=c.id;renderSetup();if(window.matchMedia('(max-width:700px)').matches)closeMobilePicker()});const pic=pieceImage(c.id);if(pic){const img=document.createElement('img');img.src=pic;img.alt='';img.style.cssText='width:46px;height:46px;object-fit:cover;float:left;margin-right:7px;border-radius:4px';button.prepend(img)}roster.append(button)}if(!visible.length){const empty=document.createElement('p');empty.textContent='該当キャラがいません';roster.append(empty)}
+let visible=ROSTER.filter(c=>(!hasKing?c.role==='キング':c.role!=='キング')&&!list.some(p=>p.type===c.id)&&list.length<4&&(!draftSearch||c.name.toLowerCase().includes(draftSearch.toLowerCase()))&&(!draftAttribute||c.attribute===draftAttribute)&&(!draftRole||c.role===draftRole));if(draftSort==='hp')visible.sort((a,b)=>b.hp-a.hp);if(draftSort==='power')visible.sort((a,b)=>b.d.reduce((x,y)=>x+y,0)-a.d.reduce((x,y)=>x+y,0));for(const c of visible){const button=document.createElement('button');button.className='draft-card'+(setupChoice===c.id?' active':'');const disabled=false;button.disabled=disabled;const strong=document.createElement('strong');strong.textContent=(c.role==='キング'?'👑 ':'')+c.name;const info=document.createElement('span');info.textContent=c.attribute+'｜'+c.role+'｜HP'+c.hp;button.append(info,strong);button.addEventListener('click',()=>{setupChoice=c.id;renderSetup();if(window.matchMedia('(max-width:700px)').matches)closeMobilePicker()});const pic=pieceImage(c.id);if(pic){const img=document.createElement('img');img.src=pic;img.alt='';img.style.cssText='width:46px;height:46px;object-fit:cover;float:left;margin-right:7px;border-radius:4px';button.prepend(img)}roster.append(button)}if(!visible.length){const empty=document.createElement('p');empty.textContent='該当キャラがいません';roster.append(empty)}
 if(!visible.some(c=>c.id===setupChoice))setupChoice=visible[0]?.id||(list.length===4?list[list.length-1]?.type:null);$('setupConfirm').disabled=list.length!==4;const imageArea=$('draftImage');imageArea.replaceChildren();if(setupChoice&&BASE[setupChoice]&&pieceImage(setupChoice)){const im=document.createElement('img');im.src=pieceImage(setupChoice);im.alt='選択キャラのシール';im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;border-radius:8px';const frame=document.createElement('div');frame.className='sticker-overlay-frame';frame.style.cssText='position:relative;width:145px;height:145px;flex:0 0 145px;overflow:hidden';frame.append(im);imageArea.append(frame);if(typeof window.yorozumonStickerOverlay==='function'){const stats=BASE[setupChoice];window.yorozumonStickerOverlay(frame,stats.d,stats.hp)}}const c=BASE[setupChoice];$('draftPreview').textContent=c?c.name+'｜'+c.attribute+'｜'+c.role+'｜HP '+c.hp:(list.length===4?'4体配置完了！':'キャラを選択してください');$('setupUndo').disabled=!list.length;$('setupClear').disabled=!list.length;$('setupConfirm').disabled=list.length!==4}
 // Drag horizontally anywhere on the sticker strip, not only on the scrollbar.
 (()=>{const strip=$('setupRoster');let startX=0,startScroll=0,active=false,moved=false,blockClick=false;
