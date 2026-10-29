@@ -760,6 +760,81 @@ body.battle-screen .game-side-column>.actions #end{
 .hit-burst{position:absolute;left:50%;top:50%;width:60%;aspect-ratio:1;border:6px solid #fff1a0;border-radius:18%;box-shadow:0 0 24px 9px #ff6c13,0 0 48px #ffdc51;animation:yorozuBurst 600ms ease-out forwards;pointer-events:none}
 .hit-spark{position:absolute;left:50%;top:50%;width:10px;height:25px;border-radius:90% 90% 20% 20%;background:linear-gradient(#fff,#ffe74e,#f44315);box-shadow:0 0 9px #ffad23;transform-origin:center;animation:yorozuSpark 650ms ease-out forwards;pointer-events:none}
 .hit-finish{position:absolute;left:50%;top:35%;font-size:clamp(30px,7vw,58px);font-weight:1000;white-space:nowrap;color:#ffeb65;-webkit-text-stroke:2px #8e1c0b;text-shadow:0 4px #4c0904,0 0 16px #ff5500;animation:yorozuKO 900ms ease-out forwards;pointer-events:none}
+/* PC battle repair: override the older full-viewport absolute-position layout. */
+@media(min-width:1001px){
+ body.battle-screen .app{max-width:1600px!important;width:100%!important;margin:0 auto!important}
+ body.battle-screen .game-workspace{
+  position:relative!important;display:grid!important;
+  grid-template-columns:minmax(205px,255px) minmax(0,1fr) minmax(210px,255px)!important;
+  width:100%!important;height:auto!important;min-height:0!important;
+  margin:8px auto 24px!important;overflow:visible!important;gap:12px!important;
+  align-items:start!important;background:transparent!important
+ }
+ body.battle-screen .game-workspace::before{display:none!important}
+ body.battle-screen .game-workspace>.character-panel{
+  grid-column:1!important;grid-row:1!important;position:sticky!important;
+  top:12px!important;left:auto!important;right:auto!important;
+  width:auto!important;max-height:calc(100dvh - 30px)!important;overflow:auto!important;
+  z-index:2!important;pointer-events:auto!important;background:#211e1de8!important
+ }
+ body.battle-screen .game-workspace>.game-board-column{
+  grid-column:2!important;grid-row:1!important;position:relative!important;
+  inset:auto!important;display:block!important;width:100%!important;
+  min-width:0!important;height:auto!important;padding:7px!important;
+  background:transparent!important;border:0!important;box-shadow:none!important
+ }
+ body.battle-screen .game-board-column #boardViewport{
+  position:relative!important;width:100%!important;max-width:min(100%,calc(100dvh - 100px))!important;
+  max-height:none!important;margin:auto!important;overflow:visible!important;flex:none!important
+ }
+ body.battle-screen .game-board-column #board{
+  width:100%!important;max-width:100%!important;aspect-ratio:1!important
+ }
+ body.battle-screen .game-workspace>.game-side-column{
+  grid-column:3!important;grid-row:1!important;position:sticky!important;
+  inset:auto!important;top:12px!important;display:flex!important;
+  flex-direction:column!important;gap:10px!important;width:auto!important;
+  height:auto!important;min-width:0!important;pointer-events:auto!important;z-index:3!important
+ }
+ body.battle-screen .game-side-column>.spread,
+ body.battle-screen .game-side-column>.actions,
+ body.battle-screen .game-side-column>#msg{
+  position:static!important;inset:auto!important;top:auto!important;left:auto!important;
+  right:auto!important;bottom:auto!important;width:100%!important;max-width:100%!important;
+  margin:0!important;pointer-events:auto!important
+ }
+ body.battle-screen .game-side-column>.spread #ap{
+  position:static!important;padding:6px 10px!important;font-size:18px!important
+ }
+ body.battle-screen .game-side-column>.actions{
+  display:flex!important;flex-direction:column!important;gap:8px!important
+ }
+ body.battle-screen .game-side-column>.actions #roll{min-height:65px!important}
+ body.battle-screen .game-side-column>.actions .hud-rotation button{min-height:56px!important}
+}
+.level-up-on-piece{
+ position:fixed!important;z-index:10020!important;transform:translate(-50%,-50%)!important;
+ white-space:nowrap!important;pointer-events:none!important;
+ font-size:clamp(15px,2.2vw,26px)!important;
+ animation:yorozuLevelRise 1400ms ease-out forwards!important
+}
+@keyframes yorozuLevelRise{
+ 0%{opacity:0;translate:0 20px;scale:.65}
+ 20%{opacity:1;translate:0 -10px;scale:1.2}
+ 70%{opacity:1;translate:0 -24px;scale:1}
+ 100%{opacity:0;translate:0 -55px;scale:1.05}
+}
+.shatter-field{position:absolute;inset:0;pointer-events:none;z-index:2}
+.shatter-fragment{
+ position:absolute;width:20%;height:20%;background-size:500% 500%;
+ background-repeat:no-repeat;box-shadow:0 0 2px #fff9;
+ animation:yorozuShatter 900ms cubic-bezier(.18,.7,.3,1) forwards;
+}
+@keyframes yorozuShatter{
+ 0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)}
+ 35%{opacity:1}
+ 100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.35)}
+}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
@@ -1000,8 +1075,13 @@ if(!visible.some(c=>c.id===setupChoice))setupChoice=visible[0]?.id||(list.length
  strip.addEventListener('click',e=>{if(blockClick){e.preventDefault();e.stopPropagation();blockClick=false}},true);
 })();
 function runTests(){const tests=[];const check=(name,fn)=>{try{if(!fn())throw Error('不一致');tests.push('✅ '+name)}catch(e){tests.push('❌ '+name+'：'+e.message)}};check('キャラデータ構造',()=>{validateRoster(ROSTER);return true});check('キャラID重複なし',()=>new Set(ROSTER.map(c=>c.id)).size===ROSTER.length);check('盤面6×6',()=>inside(0,0)&&inside(5,5)&&!inside(-1,0)&&!inside(6,0));check('移動は1ターン1回',()=>{const p={side, moved:true,r:3,c:3,d:Array(8).fill(3),usedDirs:Array(8).fill(0),rotation:0,coins:0};const oldR=rolled,oldAP=ap;rolled=true;ap=6;const result=!can(p,2,3,'move');rolled=oldR;ap=oldAP;return result});check('攻撃は1ターン1回',()=>{const p={side,attacked:true,r:3,c:3,d:Array(8).fill(3),usedDirs:Array(8).fill(0),rotation:0,coins:0};const oldR=rolled,oldAP=ap;rolled=true;ap=6;const result=!can(p,2,3,'attack');rolled=oldR;ap=oldAP;return result});check('編成4体・キング1体・重複なし',()=>Object.values(setupPlaced).every(list=>new Set(list.map(p=>p.type)).size===list.length&&list.filter(isKing).length<=1&&list.length<=4));check('全駒HPと座標',()=>pieces.every(p=>Number.isFinite(p.hp)&&inside(p.r,p.c)));check('盤上の重なりなし',()=>new Set(pieces.map(p=>p.r+','+p.c)).size===pieces.length);check('APが負になっていない',()=>ap>=0);check('行動ログと履歴の整合',()=>actionHistory.every(h=>h.logLength<=battleLog.length));$('testStatus').textContent=tests.join(' ／ ');logAction('🧪 診断：'+tests.filter(t=>t.startsWith('✅')).length+'/'+tests.length+'項目合格','turn')}
-function showLevelUp(p){const el=document.createElement('div');el.className='level-up-toast';el.textContent='✨ LEVEL UP! ✨';document.body.append(el);setTimeout(()=>el.remove(),1250)}
-function showHitEffect(r,c,damage,bonus,flankBonus,defeated){
+function showLevelUp(p){
+ const el=document.createElement('div');el.className='level-up-toast level-up-on-piece';el.textContent='✨ LEVEL UP! ✨';
+ const cell=$('board').querySelectorAll('.cell')[p.r*6+p.c];
+ if(cell){const rect=cell.getBoundingClientRect();el.style.left=(rect.left+rect.width/2)+'px';el.style.top=(rect.top+rect.height*.18)+'px'}
+ document.body.append(el);setTimeout(()=>el.remove(),1450)
+}
+function showHitEffect(r,c,damage,bonus,flankBonus,defeated,defeatedImage){
  // Keep hit feedback visible on mobile even when Reduce Motion is enabled.
  const cell=$('board').querySelectorAll('.cell')[r*6+c];if(!cell)return;
  const rect=cell.getBoundingClientRect(),overlay=document.createElement('div');
@@ -1018,7 +1098,24 @@ function showHitEffect(r,c,damage,bonus,flankBonus,defeated){
   spark.style.animationDelay=(i%3*28)+'ms';
   overlay.append(spark);
  }
- if(defeated){const finish=document.createElement('div');finish.className='hit-finish';finish.textContent='K.O.!';overlay.append(finish)}
+ if(defeated){
+  const finish=document.createElement('div');finish.className='hit-finish';finish.textContent='K.O.!';overlay.append(finish);
+  if(defeatedImage){
+   const shards=document.createElement('div');shards.className='shatter-field';overlay.append(shards);
+   for(let n=0;n<25;n++){
+    const fragment=document.createElement('div');fragment.className='shatter-fragment';
+    const col=n%5,row=Math.floor(n/5);
+    fragment.style.left=(col*20)+'%';fragment.style.top=(row*20)+'%';
+    fragment.style.backgroundImage='url("'+defeatedImage.replace(/"/g,'%22')+'")';
+    fragment.style.backgroundPosition=(col*25)+'% '+(row*25)+'%';
+    fragment.style.setProperty('--dx',((col-2)*24+(Math.random()-.5)*42)+'px');
+    fragment.style.setProperty('--dy',((row-2)*24+(Math.random()-.5)*42-28)+'px');
+    fragment.style.setProperty('--rot',((Math.random()-.5)*650)+'deg');
+    fragment.style.animationDelay=(n%4*22)+'ms';
+    shards.append(fragment);
+   }
+  }
+}
 
  const bonuses=[];if(bonus)bonuses.push('👑 威光＋'+bonus);if(flankBonus)bonuses.push('⚔ 挟撃＋'+flankBonus);if(defeated)bonuses.push('💥 撃破！');
  if(bonuses.length){const label=document.createElement('div');label.className='hit-bonus';label.textContent=bonuses.join('　');overlay.append(label)}
@@ -1068,7 +1165,7 @@ function animateMovement(p,route,origin){
 }
 function reset(){closeMobilePicker();diceEpoch++;dicePending=null;$('diceOverlay').hidden=true;coinEpoch++;$('coinOverlay').hidden=true;matchRoster=null;matchRecorded=false;matchStats={r:{damage:0,kills:0},b:{damage:0,kills:0}};animationEpoch++;animationBusy=false;actionHistory=[];battleLog=[];turnNumber=0;renderLog();cpuBusy=false;$('testStatus').textContent='';rotationAvailable=false;rotationUsed=false;jumpPairs=new Set();gameMode=$('gameMode').value;pieces=[];setupPlaced={r:[],b:[]};phase='setup';setupSide='r';setupChoice=ROSTER.find(c=>c.role==='キング').id;side='r';ap=0;rolled=false;selected=null;mode='move';winner=null;damage=1;goal={r:false,b:false};say('まず赤軍の4体を配置してください');render()}
 let inspectedEnemy=null;
-function click(r,c){if(!$('coinOverlay').hidden||!$('diceOverlay').hidden)return;let pendingMove=null,pendingHit=null;if(phase==='setup'){setupAdd(r,c);return}if(winner||cpuBusy||animationBusy||(isCpuMode()&&side==='b'))return;const q=at(r,c);if(q&&q.side!==side){inspectedEnemy=q}else if(q&&q.side===side){inspectedEnemy=null}const actionKind=selected&&q&&q.side!==side?'attack':'move';if(selected&&can(selected,r,c,actionKind)){saveAction();if(actionKind==='move'){pendingMove={p:selected,origin:{r:selected.r,c:selected.c},route:movementRoute(selected,r,c)};const from=pos(selected.r,selected.c);const cost=moveCost(selected,r,c);const dir=direction(selected,r,c);selected.usedDirs[dir]+=movementUse(selected,r,c);recordJump(selected,r,c);selected.moveDistance+=Math.max(Math.abs(r-selected.r),Math.abs(c-selected.c));selected.r=r;selected.c=c;ap-=cost;selected.moved=true;logAction((side==='r'?'🔴':'🔵')+' '+BASE[selected.type].name+' '+from+' → '+pos(r,c)+' 移動（AP-'+cost+'）');say('移動確定！ この駒は今ターン移動終了。残りAP '+ap+'で攻撃や他の駒の行動が可能。');if(isKing(selected)&&selected.r===(side==='r'?0:5)){goal[side]=true;say('👑 敵陣最奥列に到達！ 敵ターンを生き延びれば勝利！')}else if(isKing(selected))goal[side]=false;if(ap<1)selected=null}else{const targetName=BASE[q.type].name;const attackerName=BASE[selected.type].name;const targetPos=pos(r,c);const i=direction(selected,r,c);const spend=1;const {bonus,flankBonus}=firstStrikeBonuses(selected,q),total=spend+bonus+flankBonus;q.hp-=total;matchStats[side].damage+=total;if(q.hp<=0)matchStats[side].kills++;pendingHit={r,c,total,bonus,flankBonus,defeated:q.hp<=0};ap-=spend;selected.attacked=true;selected.attackTarget=q.id;selected.usedDirs[i]=(selected.usedDirs[i]||0)+1;logAction((side==='r'?'🔴':'🔵')+' '+attackerName+' → '+targetName+'('+targetPos+') '+total+'ダメージ（AP-'+spend+'、威光+'+bonus+'、挟撃+'+flankBonus+'）');say('⚔️ 基本'+spend+'＋王の威光'+bonus+'＋属性挟撃'+flankBonus+'＝'+total+'ダメージ！'+(!selected.moved?' まだ移動可能。':''));if(q.hp<=0){pieces=pieces.filter(x=>x!==q);selected.coins+=1+q.coins;selected.levelUps=(selected.levelUps||0)+1+(q.levelUps||0);showLevelUp(selected);selected.max++;selected.hp++;say('撃破！ HP＋1、コイン獲得！');logAction('💥 '+targetName+'撃破！ '+attackerName+'がコインを獲得');if(isKing(q))win(side,'敵王を撃破')}if(ap<1)selected=null;else mode='move'}}else if(q&&q.side===side){selected=q;damage=1;say(q.moved?'この駒は移動済み（再移動不可）。'+(q.attacked?'攻撃も終了':'攻撃は可能'):(q.attacked?'攻撃済み：まだ1回移動可能':'移動1回・攻撃が可能'))}else if(q&&q.side!==side){say('敵のシール情報を表示中');}else say(rolled?'そのマスには行動できません':'まずサイコロを振ってください');render();if(pendingMove)animateMovement(pendingMove.p,pendingMove.route,pendingMove.origin);if(pendingHit)showHitEffect(pendingHit.r,pendingHit.c,pendingHit.total,pendingHit.bonus,pendingHit.flankBonus,pendingHit.defeated)}
+function click(r,c){if(!$('coinOverlay').hidden||!$('diceOverlay').hidden)return;let pendingMove=null,pendingHit=null;if(phase==='setup'){setupAdd(r,c);return}if(winner||cpuBusy||animationBusy||(isCpuMode()&&side==='b'))return;const q=at(r,c);if(q&&q.side!==side){inspectedEnemy=q}else if(q&&q.side===side){inspectedEnemy=null}const actionKind=selected&&q&&q.side!==side?'attack':'move';if(selected&&can(selected,r,c,actionKind)){saveAction();if(actionKind==='move'){pendingMove={p:selected,origin:{r:selected.r,c:selected.c},route:movementRoute(selected,r,c)};const from=pos(selected.r,selected.c);const cost=moveCost(selected,r,c);const dir=direction(selected,r,c);selected.usedDirs[dir]+=movementUse(selected,r,c);recordJump(selected,r,c);selected.moveDistance+=Math.max(Math.abs(r-selected.r),Math.abs(c-selected.c));selected.r=r;selected.c=c;ap-=cost;selected.moved=true;logAction((side==='r'?'🔴':'🔵')+' '+BASE[selected.type].name+' '+from+' → '+pos(r,c)+' 移動（AP-'+cost+'）');say('移動確定！ この駒は今ターン移動終了。残りAP '+ap+'で攻撃や他の駒の行動が可能。');if(isKing(selected)&&selected.r===(side==='r'?0:5)){goal[side]=true;say('👑 敵陣最奥列に到達！ 敵ターンを生き延びれば勝利！')}else if(isKing(selected))goal[side]=false;if(ap<1)selected=null}else{const targetName=BASE[q.type].name;const attackerName=BASE[selected.type].name;const targetPos=pos(r,c);const i=direction(selected,r,c);const spend=1;const {bonus,flankBonus}=firstStrikeBonuses(selected,q),total=spend+bonus+flankBonus;q.hp-=total;matchStats[side].damage+=total;if(q.hp<=0)matchStats[side].kills++;pendingHit={r,c,total,bonus,flankBonus,defeated:q.hp<=0,defeatedImage:q.hp<=0?pieceImage(q.type):null};ap-=spend;selected.attacked=true;selected.attackTarget=q.id;selected.usedDirs[i]=(selected.usedDirs[i]||0)+1;logAction((side==='r'?'🔴':'🔵')+' '+attackerName+' → '+targetName+'('+targetPos+') '+total+'ダメージ（AP-'+spend+'、威光+'+bonus+'、挟撃+'+flankBonus+'）');say('⚔️ 基本'+spend+'＋王の威光'+bonus+'＋属性挟撃'+flankBonus+'＝'+total+'ダメージ！'+(!selected.moved?' まだ移動可能。':''));if(q.hp<=0){pieces=pieces.filter(x=>x!==q);selected.coins+=1+q.coins;selected.levelUps=(selected.levelUps||0)+1+(q.levelUps||0);showLevelUp(selected);selected.max++;selected.hp++;say('撃破！ HP＋1、コイン獲得！');logAction('💥 '+targetName+'撃破！ '+attackerName+'がコインを獲得');if(isKing(q))win(side,'敵王を撃破')}if(ap<1)selected=null;else mode='move'}}else if(q&&q.side===side){selected=q;damage=1;say(q.moved?'この駒は移動済み（再移動不可）。'+(q.attacked?'攻撃も終了':'攻撃は可能'):(q.attacked?'攻撃済み：まだ1回移動可能':'移動1回・攻撃が可能'))}else if(q&&q.side!==side){say('敵のシール情報を表示中');}else say(rolled?'そのマスには行動できません':'まずサイコロを振ってください');render();if(pendingMove)animateMovement(pendingMove.p,pendingMove.route,pendingMove.origin);if(pendingHit)showHitEffect(pendingHit.r,pendingHit.c,pendingHit.total,pendingHit.bonus,pendingHit.flankBonus,pendingHit.defeated,pendingHit.defeatedImage)}
 function render(){const board=$('board');board.replaceChildren();for(let r=0;r<6;r++)for(let c=0;c<6;c++){const p=at(r,c),cell=document.createElement('button');cell.type='button';cell.className='cell '+((r+c)%2?'dark':'light');if(phase==='setup'&&inSetupZone(setupSide,r)&&!p&&setupPlaced[setupSide].length<4)cell.classList.add('setup-cell');if(selected){if(can(selected,r,c,'move'))cell.classList.add('movable');else if(can(selected,r,c,'attack'))cell.classList.add('attackable')}if(p){const token=document.createElement('div');token.className='piece '+(p.side==='r'?'red':'blue')+(selected===p?' chosen':'')+((p.levelUps||0)>0?' leveled-up':'');const sym=document.createElement('span');const imageSrc=pieceImage(p.type);if(imageSrc){const im=document.createElement('img');im.src=imageSrc;im.alt=BASE[p.type].name;im.onerror=()=>{sym.querySelector('svg')?.remove();sym.classList.remove('board-sticker');sym.textContent=BASE[p.type]?.icon||'⭐';sym.style.display='flex';sym.style.alignItems='center';sym.style.justifyContent='center';sym.style.fontSize='clamp(18px,3vw,32px)';hp.textContent='♥'+p.hp};im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:3px';im.style.transform='rotate('+((p.rotation||0)*45)+'deg)';im.style.transformOrigin='50% 50%';sym.append(im);sym.style.width='100%';sym.style.height='100%';sym.style.position='absolute';sym.style.inset='0';sym.style.zIndex='0';sym.classList.add('board-sticker');if(typeof window.yorozumonStickerOverlay==='function'){window.yorozumonStickerOverlay(sym,Array.from({length:8},(_,i)=>Math.min(5,val(p,i))),p.hp,false,p.rotation||0)}}else sym.textContent=BASE[p.type].icon;sym.style.display='inline-block';sym.style.transform='none';const auraMark=document.createElement('span');auraMark.textContent=aura(p)?'✨':'';const hp=document.createElement('small');hp.textContent=imageSrc?'':'♥'+p.hp;if(p.levelUps){token.dataset.level=String(p.levelUps)}token.title='属性：'+BASE[p.type].attribute;token.append(sym,auraMark,hp);cell.append(token)}cell.setAttribute('aria-label',(r+1)+'行'+(c+1)+'列 '+(p?BASE[p.type].name:'空き'));cell.addEventListener('click',()=>click(r,c));board.append(cell)}renderSetup();$('turn').textContent=phase==='setup'?'🧩 編成フェーズ':(winner?(winner==='r'?'🔴 赤軍':'🔵 青軍')+' 勝利！':(side==='r'?'🔴 赤軍':'🔵 青軍')+'のターン');$('ap').textContent=rolled?'AP '+ap:'AP —';$('roll').disabled=phase!=='battle'||rolled||!!winner||cpuBusy||isCpuMode()&&side==='b';$('end').disabled=phase!=='battle'||!rolled||!!winner||cpuBusy||isCpuMode()&&side==='b';$('gameMode').disabled=cpuBusy||phase==='battle';const mobilePrimary=window.matchMedia('(max-width:700px)').matches&&phase==='battle';$('roll').hidden=mobilePrimary&&rolled;$('end').hidden=mobilePrimary&&!rolled;const detailPiece=inspectedEnemy&&pieces.includes(inspectedEnemy)?inspectedEnemy:selected;$('info').textContent=detailPiece?(detailPiece.side!==side?'🔎 敵軍｜':'')+BASE[detailPiece.type].icon+' '+BASE[detailPiece.type].name+'　HP '+detailPiece.hp+'/'+detailPiece.max:'駒を選択してください';$('state').textContent=detailPiece?'移動：'+(detailPiece.moveDistance||0)+'マス（'+(detailPiece.moved?'移動済 ✓':'未移動 ○')+'） ／ 攻撃：'+(detailPiece.attacked?'攻撃済':'未 ○')+' ／ 🪙 '+detailPiece.coins:'移動・攻撃の状態';$('aura').textContent=detailPiece?(aura(detailPiece)?'✨ 王の威光発動！ 攻撃＋1（追加APなし）':'👑 王の威光：現在ボーナスなし'):'👑 王の威光：隣接する味方の攻撃＋1';const sticker=$('stickerPreview');sticker.replaceChildren();sticker.style.display=selected&&!!pieceImage(selected.type)?'block':'none';if(selected&&pieceImage(selected.type)){const im=document.createElement('img');im.src=pieceImage(selected.type);im.alt=BASE[selected.type].name+' シール拡大';im.onerror=()=>{sticker.style.display='none'};if(typeof window.yorozumonStickerOverlay==='function'){const frame=document.createElement('div');frame.className='sticker-overlay-frame';frame.style.cssText='position:relative;width:min(100%,280px);aspect-ratio:1;margin:auto;overflow:hidden';frame.append(im);sticker.append(frame);window.yorozumonStickerOverlay(frame,Array.from({length:8},(_,i)=>val(selected,i)),selected.hp)}else{sticker.append(im)}}if(selected){const info=document.createElement('p');info.textContent=BASE[selected.type].name+'｜HP '+selected.hp+'/'+selected.max+'｜🪙 '+selected.coins;sticker.append(info);const dirInfo=document.createElement('div');dirInfo.className='directions';for(const i of [0,1,2,7,-1,3,6,5,4]){const d=document.createElement('div');d.className='dir';d.textContent=i<0?'✦':Math.max(0,val(selected,i)-selected.usedDirs[i]);dirInfo.append(d)}sticker.append(dirInfo)}// Mobile compass: one enlarged sticker in the centre, eight directional values around it.
 
 const compass=$('mobileCompass');
