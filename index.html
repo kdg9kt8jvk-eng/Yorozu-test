@@ -621,6 +621,17 @@ body.battle-screen .arena-atmosphere{display:none!important}
   background-position:50% calc(50% + 7px)!important;
  }
 }
+/* Mobile-only final cleanup: no empty status panel or duplicated arena floor. */
+@media(max-width:700px){
+ body.battle-screen .app>#resultsPanel{display:none!important}
+ body.battle-screen .game-workspace{
+  background-image:none!important;background-color:transparent!important;
+ }
+ body.battle-screen .game-workspace::before{display:none!important}
+ body.battle-screen .game-side-column{
+  background-image:none!important;background-color:transparent!important;
+ }
+}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
