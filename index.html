@@ -512,6 +512,46 @@ body.battle-screen .arena-atmosphere{display:none!important}
  body.battle-screen .game-side-column>.actions .hud-rotation button small{font-size:9px!important;margin-top:1px!important}
  body.battle-screen .game-side-column>.actions #undoAction{grid-column:1/3!important}
 }
+/* Mobile: use native inertial horizontal swiping, not pointer-driven scrolling. */
+@media(max-width:700px){
+ body.setup-screen .setup-stage-roster #setupRoster{
+  touch-action:pan-x!important;overscroll-behavior-x:contain!important;
+  -webkit-overflow-scrolling:touch!important;scroll-snap-type:none!important;
+  cursor:auto!important;scroll-behavior:auto!important
+ }
+ body.setup-screen .setup-stage-roster #setupRoster .draft-card{touch-action:pan-x!important}
+ /* The approved wide arena's central 6x6 square fills the mobile square viewport. */
+ body.battle-screen .zoom-viewport .board.has-arena-image{
+  background-size:246% 143%!important;
+  background-position:50% 50%!important
+ }
+ /* Put turn/AP into the board header, without moving the playable grid. */
+ body.battle-screen .game-board-column{position:relative!important;padding-top:70px!important}
+ body.battle-screen .game-board-column::before{display:none!important}
+ body.battle-screen .game-side-column>.spread{
+  position:absolute!important;top:0!important;left:0!important;right:0!important;
+  z-index:9!important;min-height:60px!important;margin:0!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  padding:9px 12px!important;box-sizing:border-box!important
+ }
+ body.battle-screen .game-side-column>.actions{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important
+ }
+ body.battle-screen .game-side-column>.actions #roll{grid-column:1!important;grid-row:1!important}
+ body.battle-screen .game-side-column>.actions #undoAction{grid-column:2!important;grid-row:1!important}
+ body.battle-screen .game-side-column>.actions .hud-rotation{
+  grid-column:3!important;grid-row:1!important;display:block!important;width:100%!important
+ }
+ body.battle-screen .game-side-column>.actions .hud-rotation button{
+  width:100%!important;height:100%!important;min-height:48px!important;
+  font-size:24px!important;padding:3px!important
+ }
+ body.battle-screen .game-side-column>.actions #end{
+  grid-column:1/-1!important;grid-row:2!important;width:100%!important;
+  background:linear-gradient(#dc5953,#922522)!important;
+  border-color:#f69a87!important;color:#fff!important;font-weight:900!important
+ }
+}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
@@ -708,8 +748,8 @@ let visible=ROSTER.filter(c=>(!hasKing?c.role==='キング':c.role!=='キング'
 if(!visible.some(c=>c.id===setupChoice))setupChoice=visible[0]?.id||(list.length===4?list[list.length-1]?.type:null);$('setupConfirm').disabled=list.length!==4;const imageArea=$('draftImage');imageArea.replaceChildren();if(setupChoice&&BASE[setupChoice]&&pieceImage(setupChoice)){const im=document.createElement('img');im.src=pieceImage(setupChoice);im.alt='選択キャラのシール';im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;border-radius:8px';const frame=document.createElement('div');frame.className='sticker-overlay-frame';frame.style.cssText='position:relative;width:145px;height:145px;flex:0 0 145px;overflow:hidden';frame.append(im);imageArea.append(frame);if(typeof window.yorozumonStickerOverlay==='function'){const stats=BASE[setupChoice];window.yorozumonStickerOverlay(frame,stats.d,stats.hp)}}const c=BASE[setupChoice];$('draftPreview').textContent=c?c.name+'｜'+c.attribute+'｜'+c.role+'｜HP '+c.hp:(list.length===4?'4体配置完了！':'キャラを選択してください');$('setupUndo').disabled=!list.length;$('setupClear').disabled=!list.length;$('setupConfirm').disabled=list.length!==4}
 // Drag horizontally anywhere on the sticker strip, not only on the scrollbar.
 (()=>{const strip=$('setupRoster');let startX=0,startScroll=0,active=false,moved=false,blockClick=false;
- strip.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;startX=e.clientX;startScroll=strip.scrollLeft;active=true;moved=false});
- strip.addEventListener('pointermove',e=>{if(!active)return;const dx=e.clientX-startX;if(Math.abs(dx)>6){moved=true;strip.classList.add('dragging');strip.scrollLeft=startScroll-dx;if(e.pointerType==='mouse'&&!strip.hasPointerCapture(e.pointerId))strip.setPointerCapture(e.pointerId)}});
+ strip.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;if(e.button!==0)return;startX=e.clientX;startScroll=strip.scrollLeft;active=true;moved=false});
+ strip.addEventListener('pointermove',e=>{if(!active||e.pointerType!=='mouse')return;const dx=e.clientX-startX;if(Math.abs(dx)>6){moved=true;strip.classList.add('dragging');strip.scrollLeft=startScroll-dx;if(e.pointerType==='mouse'&&!strip.hasPointerCapture(e.pointerId))strip.setPointerCapture(e.pointerId)}});
  const finish=()=>{if(moved){blockClick=true;setTimeout(()=>blockClick=false,100)}active=false;strip.classList.remove('dragging')};
  strip.addEventListener('pointerup',finish);strip.addEventListener('pointercancel',finish);strip.addEventListener('lostpointercapture',finish);
  strip.addEventListener('click',e=>{if(blockClick){e.preventDefault();e.stopPropagation();blockClick=false}},true);
