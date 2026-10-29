@@ -481,11 +481,11 @@ body.battle-screen .arena-atmosphere{display:none!important}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
- position:relative;display:block;width:100%;height:100%;aspect-ratio:1;
- overflow:hidden;flex:none;
+ position:relative;display:block;width:100%;height:auto!important;aspect-ratio:1/1;
+ overflow:hidden;flex:none;align-self:center;
 }
 body.setup-screen .deployment-cell .deployment-sticker-frame>img{
- display:block;width:100%;height:100%;object-fit:fill;aspect-ratio:1;
+ display:block;width:100%;height:auto!important;aspect-ratio:1/1;object-fit:contain;
 }
 body.setup-screen .deployment-cell .deployment-sticker-frame>svg{
  position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
