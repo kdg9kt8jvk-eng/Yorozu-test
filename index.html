@@ -890,7 +890,14 @@ function placeMobileBattleHeader(){
   if(battleTurnHeader.parentElement!==boardColumn)boardColumn.insertBefore(battleTurnHeader,boardViewport);
   battleTurnHeader.classList.add('battle-turn-header');
  }else{
-  if(battleTurnHeader.parentElement!==sideColumn)sideColumn.insertBefore(battleTurnHeader,battleActions);
+  const desktopDock=window.matchMedia('(min-width:1001px)').matches&&phase==='battle';
+  if(desktopDock){
+   const dock=document.querySelector('.pc-battle-right');
+   if(dock&&battleTurnHeader.parentElement!==dock)dock.insertBefore(battleTurnHeader,dock.firstChild);
+  }else if(battleTurnHeader.parentElement!==sideColumn){
+   if(battleActions.parentElement===sideColumn)sideColumn.insertBefore(battleTurnHeader,battleActions);
+   else sideColumn.append(battleTurnHeader);
+  }
   battleTurnHeader.classList.remove('battle-turn-header');
  }
 }
@@ -916,9 +923,9 @@ function arrangeDesktopDocks(){
   if(battleLogPanel.parentElement!==pcRightDock)pcRightDock.append(battleLogPanel);
   battleLogPanel.open=true;
  }else{
-  if(setupActions.parentElement!==sideColumn)sideColumn.insertBefore(setupActions,battleActions);
-  if(battleActions.parentElement!==sideColumn)sideColumn.insertBefore(battleActions,characterPanel);
-  if(characterPanel.parentElement!==sideColumn)sideColumn.insertBefore(characterPanel,battleMessage);
+  if(setupActions.parentElement!==sideColumn)sideColumn.append(setupActions);
+  if(battleActions.parentElement!==sideColumn)sideColumn.append(battleActions);
+  if(characterPanel.parentElement!==sideColumn)sideColumn.append(characterPanel);
   if(battleMessage.parentElement!==sideColumn)sideColumn.append(battleMessage);
   if(battleLogPanel.parentElement!==battleLogHome)battleLogHome.append(battleLogPanel);
  }
