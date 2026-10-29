@@ -670,6 +670,37 @@ body.battle-screen .arena-atmosphere{display:none!important}
 }
 /* Actual source of the empty top bar: the orphaned original setup .panel wrapper. */
 body.battle-screen .app>.setup-host-shell{display:none!important}
+/* Compact mobile character HUD: sticker + surrounding values first, stats beneath. */
+@media(max-width:700px){
+ body.battle-screen .game-side-column{gap:7px!important}
+ body.battle-screen .character-panel{
+  padding:8px 10px!important;margin:0!important;
+ }
+ body.battle-screen .mobile-compass:not([hidden]){
+  width:min(100%,260px)!important;
+  aspect-ratio:1!important;margin:0 auto 8px!important;
+  padding:0!important;gap:1px!important;
+  background:transparent!important;border:0!important;border-radius:0!important;
+ }
+ body.battle-screen .mobile-compass .mobile-compass-value{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  border-radius:0!important;font-size:clamp(18px,5vw,26px)!important;
+  text-shadow:0 2px 4px #000,0 0 8px #b18b44!important;
+ }
+ body.battle-screen .mobile-compass .mobile-compass-sticker{
+  filter:drop-shadow(0 2px 5px #0009)!important;
+ }
+ body.battle-screen .character-panel #info{
+  font-size:16px!important;line-height:1.3!important;margin:4px 0!important;
+ }
+ body.battle-screen .character-panel #state{
+  font-size:12px!important;line-height:1.4!important;margin:3px 0!important;
+ }
+ body.battle-screen .character-panel #aura{font-size:11px!important;margin:3px 0!important}
+ body.battle-screen .game-side-column>#msg{order:3!important}
+ body.battle-screen .game-side-column>.character-panel{order:2!important}
+ body.battle-screen .game-side-column>.actions{order:1!important}
+}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
@@ -721,7 +752,17 @@ function placeMobileBattleHeader(){
 }
 window.addEventListener('resize',placeMobileBattleHeader);
 
-sideColumn.append(modeLabel,modeSelect,setupPanel,setupActions,battleActions,battleMessage,document.querySelector('.character-panel'));
+const characterPanel=document.querySelector('.character-panel');
+sideColumn.append(modeLabel,modeSelect,setupPanel,setupActions,characterPanel,battleMessage);
+// Keep the existing game status text, but show it after the character information on phones.
+const compass=$('mobileCompass');
+if(compass){
+ characterPanel.insertBefore(compass,characterPanel.firstChild);
+ // Character name/HP, movement, attack and coins now follow the sticker compass.
+ characterPanel.insertBefore($('info'),compass.nextSibling);
+ characterPanel.insertBefore($('state'),$('info').nextSibling);
+}
+
 // Keep the existing rotation mechanic; relocate its controls into the battle HUD.
 const hudRotation=document.createElement('div');hudRotation.id='hudRotation';hudRotation.className='hud-rotation';hudRotation.innerHTML='<button type="button" data-turn="2" aria-label="選択した駒を時計回りに90度回転">↻<small>90°回転</small></button>';
 battleActions.insertBefore(hudRotation,$('undoAction'));
