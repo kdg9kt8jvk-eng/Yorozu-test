@@ -660,6 +660,14 @@ body.battle-screen .arena-atmosphere{display:none!important}
  }
 }
 @media(min-width:701px){.mobile-compass{display:none!important}}
+/* Remove obsolete top bar in mobile battle, including any inherited strip styling. */
+@media(max-width:700px){
+ body.battle-screen .game-board-column>.spread.labels,
+ body.battle-screen .game-workspace>.spread.labels,
+ body.battle-screen .app>.spread.labels{display:none!important}
+ body.battle-screen .game-board-column>.zoom-bar,
+ body.battle-screen .game-board-column>.arena-controls{display:none!important}
+}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
@@ -687,7 +695,9 @@ const sideColumn=document.createElement('aside');sideColumn.className='game-side
 const setupHost=$('setupPanel').parentElement;
 app.insertBefore(workspace,$('resultsPanel'));
 workspace.append(boardColumn,sideColumn);
-boardColumn.append(boardLabels,zoomBar,arenaControls,boardViewport);
+boardColumn.append(zoomBar,arenaControls,boardViewport);
+// The former blue/red labels strip is obsolete: remove its DOM node, not just its text.
+boardLabels.remove();
 const setupPanel=$('setupPanel');
 const modeLabel=document.querySelector('label[for="gameMode"]'),modeSelect=$('gameMode');
 const setupActions=setupPanel.nextElementSibling;
