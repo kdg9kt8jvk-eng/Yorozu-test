@@ -579,6 +579,21 @@ body.battle-screen .arena-atmosphere{display:none!important}
  body.battle-screen .game-board-column #boardViewport{margin-top:0!important}
  body.battle-screen .game-side-column>.spread{position:relative!important}
 }
+/* Emergency mobile arena restoration: fixed repository artwork, not a stale local override. */
+@media(max-width:700px){
+ body.battle-screen .zoom-viewport .board.has-arena-image{
+  background-image:url("images/arena-wide.png")!important;
+  background-size:246% 143%!important;
+  background-position:50% 50%!important;
+  background-repeat:no-repeat!important;
+  background-color:#a38b70!important;
+  aspect-ratio:1/1!important;
+  min-height:0!important;
+ }
+ body.battle-screen .game-board-column{padding-top:0!important}
+ body.battle-screen .game-board-column::before{display:none!important}
+ body.battle-screen .game-board-column .spread.labels{display:none!important}
+}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
