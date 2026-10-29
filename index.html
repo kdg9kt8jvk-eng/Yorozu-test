@@ -668,6 +668,8 @@ body.battle-screen .arena-atmosphere{display:none!important}
  body.battle-screen .game-board-column>.zoom-bar,
  body.battle-screen .game-board-column>.arena-controls{display:none!important}
 }
+/* Actual source of the empty top bar: the orphaned original setup .panel wrapper. */
+body.battle-screen .app>.setup-host-shell{display:none!important}
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
 body.setup-screen .deployment-cell .deployment-sticker-frame{
@@ -693,6 +695,7 @@ const workspace=document.createElement('div');workspace.className='game-workspac
 const boardColumn=document.createElement('section');boardColumn.className='game-board-column';
 const sideColumn=document.createElement('aside');sideColumn.className='game-side-column';
 const setupHost=$('setupPanel').parentElement;
+setupHost.classList.add('setup-host-shell'); // Once setup controls move to the side column, this wrapper is empty in battle.
 app.insertBefore(workspace,$('resultsPanel'));
 workspace.append(boardColumn,sideColumn);
 boardColumn.append(zoomBar,arenaControls,boardViewport);
