@@ -602,7 +602,7 @@ body.battle-screen .arena-atmosphere{display:none!important}
   border-radius:13px!important;
  }
  body.battle-screen .game-board-column .board.has-arena-image{
-  transform:translateY(7px) scale(1.025)!important;
+  transform:none!important;
   transform-origin:center center!important;
  }
  body.battle-screen .game-board-column>.spread.battle-turn-header{
@@ -612,6 +612,14 @@ body.battle-screen .arena-atmosphere{display:none!important}
   padding:8px 12px!important;
  }
  body.battle-screen .game-side-column>.spread{display:none!important}
+}
+/* Mobile: adjust only decorative stone-floor image. Never scale board, cells or pieces. */
+@media(max-width:700px){
+ body.battle-screen .game-board-column .board.has-arena-image{
+  transform:none!important;
+  background-size:252.15% 146.58%!important;
+  background-position:50% calc(50% + 7px)!important;
+ }
 }
 /* Deployment: same directional value overlay as battle stickers, contained within
    each square preview; does not affect battle sticker geometry. */
