@@ -1174,32 +1174,53 @@ function mountSoundSettings(){
  slider.oninput=()=>{soundSettings.volume=Number(slider.value);saveSoundSettings();refresh()};
  content.append(label,volumeLabel);panel.append(summary,content);header.insertBefore(panel,document.getElementById('reset'));refresh();
 }
-let gameAudio=null;
+let gameAudio=null,gameNoiseBuffer=null;
 function gameSfx(kind){
  if(!soundSettings.enabled||soundSettings.volume<=0)return;
  try{
   const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
   gameAudio=gameAudio||new Ctx();
   if(gameAudio.state==='suspended')gameAudio.resume().catch(()=>{});
-  const now=gameAudio.currentTime;
-  const note=(freq,delay,duration,type='sine',volume=.045,endFreq=null)=>{
-   const o=gameAudio.createOscillator(),g=gameAudio.createGain(),t=now+delay;
-   o.type=type;o.frequency.setValueAtTime(freq,t);
-   if(endFreq)o.frequency.exponentialRampToValueAtTime(endFreq,t+duration);
-   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0001,volume*soundSettings.volume/65),t+.012);
+  const ctx=gameAudio,now=ctx.currentTime,volume=Math.min(1,Math.max(0,soundSettings.volume/65));
+  const tone=(startHz,endHz,delay,duration,type='triangle',gain=.08)=>{
+   const t=now+delay,o=ctx.createOscillator(),g=ctx.createGain();
+   o.type=type;o.frequency.setValueAtTime(Math.max(1,startHz),t);
+   o.frequency.exponentialRampToValueAtTime(Math.max(1,endHz),t+duration);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0001,gain*volume),t+.008);
    g.gain.exponentialRampToValueAtTime(.0001,t+duration);
-   o.connect(g);g.connect(gameAudio.destination);o.start(t);o.stop(t+duration+.02);
+   o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+duration+.025);
   };
-  if(kind==='select')note(650,0,.065,'sine',.025,850);
-  if(kind==='move')note(300,0,.11,'triangle',.032,480);
-  if(kind==='jump')note(360,0,.2,'sine',.045,760);
-  if(kind==='land'){note(170,0,.13,'triangle',.055,95);note(480,.025,.1,'sine',.018,270)}
-  if(kind==='attack'){note(820,0,.13,'sawtooth',.032,170);note(145,.07,.18,'triangle',.065,65)}
-  if(kind==='ko'){note(230,0,.16,'sawtooth',.055,90);note(130,.11,.26,'triangle',.065,48)}
-  if(kind==='level'){[523,659,784,1047].forEach((f,i)=>note(f,i*.09,.19,'triangle',.04))}
-  if(kind==='dice'){[330,420,510].forEach((f,i)=>note(f,i*.075,.075,'triangle',.026))}
-  if(kind==='coin'){note(760,0,.11,'sine',.033,1100);note(940,.13,.12,'sine',.033,1250)}
- }catch(e){}
+  const noise=(delay,duration,gain=.07,filterHz=1200,endHz=null)=>{
+   if(!gameNoiseBuffer){const buffer=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate),a=buffer.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;gameNoiseBuffer=buffer}
+   const t=now+delay,src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),g=ctx.createGain();
+   src.buffer=gameNoiseBuffer;filter.type='bandpass';filter.Q.value=.75;filter.frequency.setValueAtTime(filterHz,t);
+   if(endHz)filter.frequency.exponentialRampToValueAtTime(Math.max(30,endHz),t+duration);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0001,gain*volume),t+.012);
+   g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+   src.connect(filter);filter.connect(g);g.connect(ctx.destination);src.start(t);src.stop(t+duration+.01);
+  };
+  if(kind==='select'){tone(670,1050,0,.075,'sine',.038);tone(1250,1550,.035,.065,'triangle',.018)}
+  if(kind==='move'){noise(0,.105,.042,1250,2900);tone(220,430,.018,.115,'triangle',.042)}
+  if(kind==='jump'){noise(0,.21,.062,700,4200);tone(230,950,0,.23,'sine',.048);tone(900,1250,.12,.08,'triangle',.018)}
+  if(kind==='land'){noise(0,.115,.11,260,110);tone(145,53,0,.18,'triangle',.13);tone(420,200,.02,.085,'sine',.027)}
+  if(kind==='attack'){
+   noise(0,.115,.12,900,5700);tone(1150,310,0,.13,'sawtooth',.046);
+   noise(.105,.19,.16,1600,280);tone(190,58,.105,.23,'triangle',.16);tone(650,180,.11,.1,'square',.028);
+  }
+  if(kind==='ko'){
+   noise(0,.35,.2,1300,90);tone(240,40,0,.42,'sawtooth',.1);
+   tone(110,38,.09,.45,'triangle',.18);tone(940,210,.05,.25,'square',.027);
+  }
+  if(kind==='level'){
+   noise(0,.25,.045,1400,6000);
+   [392,523,659,784,1047,1568].forEach((hz,i)=>tone(hz,hz*1.008,i*.085,.28,'triangle',.055));
+   tone(1568,2100,.46,.48,'sine',.048);
+  }
+  if(kind==='dice'){
+   [0,.07,.14,.21,.28].forEach((d,i)=>{noise(d,.045,.055,900+i*300,420);tone(180+i*42,110+i*22,d,.07,'triangle',.04)});
+  }
+  if(kind==='coin'){tone(1100,1750,0,.17,'sine',.055);tone(1500,2300,.12,.23,'triangle',.05);tone(2100,1400,.29,.17,'sine',.026)}
+ }catch(e){console.warn('SE playback failed',e)}
 }
 function playFinaleSound(){
  if(!soundSettings.enabled||soundSettings.volume<=0)return;
