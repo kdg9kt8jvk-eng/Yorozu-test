@@ -1127,7 +1127,7 @@ function jumpKey(a,b){return [a.id,b.id].sort().join('|')}
 function moveCost(p,r,c){const plan=jumpPlan(p,r,c);return plan?plan.cost:Infinity}
 function movementUse(p,r,c){return moveCost(p,r,c)}
 function recordJump(p,r,c){const partners=jumpPartners(p,r,c);if(partners)partners.forEach(q=>jumpPairs.add(jumpKey(p,q)))}
-function can(p,r,c,kind){if(!p||!rolled||ap<1||p.side!==side||!inside(r,c))return false;const i=direction(p,r,c);if(i<0||val(p,i)<1)return false;const q=at(r,c),dist=Math.max(Math.abs(r-p.r),Math.abs(c-p.c));if(kind==='attack')return !p.attacked&&dist===1&&!!q&&q.side!==side&&attackLimit(p,i)>=1;return !p.moved&&!q&&moveCost(p,r,c)<=ap&&(p.usedDirs[i]||0)+movementUse(p,r,c)<=val(p,i)}
+function can(p,r,c,kind){if(!p||!rolled||ap<1||p.side!==side||!inside(r,c))return false;const i=direction(p,r,c);if(i<0||val(p,i)<1)return false;const q=at(r,c),dist=Math.max(Math.abs(r-p.r),Math.abs(c-p.c));if(kind==='attack')return (!p.attacked||p.attackTarget===q?.id)&&dist===1&&!!q&&q.side!==side&&attackLimit(p,i)>=1;return !p.moved&&!q&&moveCost(p,r,c)<=ap&&(p.usedDirs[i]||0)+movementUse(p,r,c)<=val(p,i)}
 const RESULTS_KEY='yorozumon-results-v1';
 let matchRoster=null,matchRecorded=false,matchStats={r:{damage:0,kills:0},b:{damage:0,kills:0}};
 function readResults(){try{const data=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');return Array.isArray(data)?data:[]}catch(e){return []}}
