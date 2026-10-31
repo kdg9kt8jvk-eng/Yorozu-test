@@ -1050,9 +1050,9 @@ body.setup-screen .deployment-cell .deployment-sticker-frame>svg{
  body.setup-screen .setup-stage-board>.deployment-strip{order:2!important}
 }
 </style><style>
-#yorozuFront{position:fixed;inset:0;z-index:99999;background:radial-gradient(ellipse at 50% 45%,#4c2748 0%,#101426 55%,#080a12 100%);color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+#yorozuFront{position:fixed;inset:0;z-index:99999;background:radial-gradient(ellipse at 50% 42%,#fffef0 0%,#ffe88b 26%,#ffb52e 51%,#e83d22 80%,#a71918 100%);color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
 #yorozuFront[hidden]{display:none!important}
-#yorozuFront .front-rays{position:absolute;inset:-70%;background:repeating-conic-gradient(from 0deg,#ffc95a16 0deg 8deg,transparent 9deg 23deg);animation:frontSpin 26s linear infinite;pointer-events:none}
+#yorozuFront .front-rays{position:absolute;inset:-70%;background:repeating-conic-gradient(from 0deg,#fff9c87d 0deg 7deg,#ffdb3e30 8deg 18deg,#f4433630 19deg 25deg);animation:frontSpin 26s linear infinite;pointer-events:none}
 #yorozuFront .front-stage{position:relative;width:100%;height:100%;overflow:hidden}
 #yorozuFront .front-logo{display:block;width:min(88vw,950px);max-height:45vh;object-fit:contain;filter:drop-shadow(0 10px 22px #000a);margin:auto}
 #yorozuFront .front-title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;padding:22px;text-align:center}
@@ -1065,8 +1065,8 @@ body.setup-screen .deployment-cell .deployment-sticker-frame>svg{
 #yorozuFront .front-intro{position:absolute;inset:0;cursor:pointer;overflow:hidden}
 #yorozuFront .front-intro .intro-caption{position:absolute;bottom:8%;left:0;right:0;text-align:center;font-weight:900;font-size:clamp(16px,2vw,27px);letter-spacing:.2em;text-shadow:0 3px 12px #000;z-index:5}
 #yorozuFront .intro-skip{position:absolute;right:18px;top:18px;background:#121b2dbb;color:#ffe4a2;border:1px solid #cda34e;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;z-index:8}
-#yorozuFront .intro-actor{position:absolute;width:clamp(150px,24vw,340px);aspect-ratio:1;object-fit:contain;left:50%;top:46%;filter:drop-shadow(0 10px 22px #000b);pointer-events:none;animation:yorozuRush 1.3s cubic-bezier(.1,.35,.35,1) forwards;--tx:0vw;--ty:0vh;--rot:0deg}
-@keyframes yorozuRush{0%{transform:translate(-50%,-50%) scale(.08) rotate(0deg);opacity:0;filter:blur(7px)}15%{opacity:1}75%{opacity:1;filter:blur(0)}100%{transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scale(2.15) rotate(var(--rot));opacity:0;filter:blur(3px)}}
+#yorozuFront .intro-actor{position:absolute;width:clamp(150px,24vw,340px);aspect-ratio:1;object-fit:contain;left:50%;top:46%;filter:drop-shadow(0 10px 22px #000b);pointer-events:none;animation:yorozuRush 4.5s cubic-bezier(.18,.26,.45,1) forwards;--tx:0vw;--ty:0vh;--rot:0deg}
+@keyframes yorozuRush{0%{transform:translate(-50%,-50%) scale(.08) rotate(0deg);opacity:0;filter:blur(7px)}15%{opacity:1}86%{opacity:1;filter:blur(0)}100%{transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scale(2.15) rotate(var(--rot));opacity:0;filter:blur(3px)}}
 @keyframes frontSpin{to{transform:rotate(360deg)}}
 #yorozuFront .front-audio{position:absolute;bottom:12px;right:14px;z-index:9;background:#1d2638;border:1px solid #bb914a;color:#fff1d2;border-radius:8px;padding:8px 12px;cursor:pointer}
 @media(max-width:580px){#yorozuFront .front-menu{grid-template-columns:1fr;max-width:310px}#yorozuFront .front-logo{max-height:34vh}#yorozuFront .front-title{gap:12px}#yorozuFront .intro-actor{width:55vw}}
@@ -1933,8 +1933,8 @@ const music=new Audio('./audio/opening.mp3');music.preload='none';music.volume=.
 music.addEventListener('error',()=>{}); // Music file is optional until supplied.
 function stop(){clearTimeout(timer);clearInterval(interval);interval=null;timer=null;music.pause();music.currentTime=0;active=false;intro.querySelectorAll('.intro-actor').forEach(el=>el.remove())}
 function showTitle(){if(!active)return;stop();intro.hidden=true;title.hidden=false}
-function actor(){if(!active||!roster.length)return;const c=roster[Math.floor(Math.random()*roster.length)],img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./characters/'+c.id+'.webp';img.onerror=()=>{img.onerror=null;img.src='./images/'+c.id+'.webp'};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),1450)}
-function play(){stop();active=true;title.hidden=true;intro.hidden=false;actor();interval=setInterval(actor,420);timer=setTimeout(showTitle,8500);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
+function actor(){if(!active||!roster.length)return;const c=roster[Math.floor(Math.random()*roster.length)],img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./characters/'+c.id+'.webp';img.onerror=()=>{img.onerror=null;img.src='./images/'+c.id+'.webp'};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),4650)}
+function play(){stop();active=true;title.hidden=true;intro.hidden=false;actor();interval=setInterval(actor,2500);timer=setTimeout(showTitle,60000);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
 function start(mode){stop();intro.hidden=true;title.hidden=false;front.hidden=true;const selector=document.getElementById('gameMode');if(selector){selector.value=mode;selector.dispatchEvent(new Event('change',{bubbles:true}))}window.scrollTo(0,0)}
 document.getElementById('yorozuSkip').addEventListener('click',e=>{e.stopPropagation();showTitle()});
 intro.addEventListener('click',showTitle);
