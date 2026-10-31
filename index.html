@@ -1931,7 +1931,7 @@ const roster=(window.YOROZUMON_ROSTER||[]).filter(c=>/^YM\d{3}$/.test(c.id));
 let timer=null,interval=null,active=false,started=false;
 const music=new Audio('./audio/opening.mp3');music.preload='none';music.volume=.7;
 music.addEventListener('error',()=>{}); // Music file is optional until supplied.
-function stop(){clearTimeout(timer);clearInterval(interval);interval=null;timer=null;music.pause();music.currentTime=0;active=false;intro.replaceChildren(document.getElementById('yorozuSkip')||document.createElement('span'));const caption=document.createElement('div');caption.className='intro-caption';caption.textContent='万物、集結。';intro.append(caption)}
+function stop(){clearTimeout(timer);clearInterval(interval);interval=null;timer=null;music.pause();music.currentTime=0;active=false;intro.querySelectorAll('.intro-actor').forEach(el=>el.remove())}
 function showTitle(){if(!active)return;stop();intro.hidden=true;title.hidden=false}
 function actor(){if(!active||!roster.length)return;const c=roster[Math.floor(Math.random()*roster.length)],img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./characters/'+c.id+'.webp';img.onerror=()=>{img.onerror=null;img.src='./images/'+c.id+'.webp'};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),1450)}
 function play(){stop();active=true;title.hidden=true;intro.hidden=false;actor();interval=setInterval(actor,420);timer=setTimeout(showTitle,8500);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
