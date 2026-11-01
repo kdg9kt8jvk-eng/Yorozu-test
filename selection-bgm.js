@@ -1,12 +1,9 @@
-/* Yorozumon selection/album BGM. 3-second equal-power crossfade. */
+/* Selection-only BGM with early preload and 3-second crossfade loop. */
 (()=>{'use strict';
-const KEY='yorozu-selection-bgm-v1',SRC='./audio/character_select_bgm.m4a',FADE=3;
-let a=null,b=null,active=null,next=null,started=false,raf=0,ctx=null;
-const isAlbum=location.pathname.endsWith('/album.html');
-function save(){if(!active||!Number.isFinite(active.currentTime))return;try{sessionStorage.setItem(KEY,JSON.stringify({time:active.currentTime,at:Date.now()}))}catch(_){}}
-function make(){const el=new Audio(SRC);el.preload='auto';el.volume=.65;return el}
+const SRC='./audio/character_select_bgm.m4a',FADE=3;
+let a=null,b=null,active=null,next=null,started=false,raf=0;
+function make(){const el=new Audio();el.preload='auto';el.volume=.65;el.src=SRC;el.load();return el}
 function ensure(){if(a)return;a=make();b=make();active=a;next=b}
-function restore(){try{const x=JSON.parse(sessionStorage.getItem(KEY)||'null');if(x&&Date.now()-x.at<120000&&x.time>=0)return x.time}catch(_){}return 0}
 function loop(){if(!started||!active)return;const d=active.duration,t=active.currentTime;
 if(Number.isFinite(d)&&d>FADE+1){
  const left=d-t;
@@ -21,13 +18,12 @@ if(Number.isFinite(d)&&d>FADE+1){
  }
 }
 raf=requestAnimationFrame(loop)}
-function play(){ensure();if(started)return;started=true;active.currentTime=restore();active.play().catch(()=>{started=false});cancelAnimationFrame(raf);loop()}
-function stop(){if(!a)return;save();started=false;cancelAnimationFrame(raf);for(const el of [a,b]){el.pause();el.volume=.65}}
-function sync(){if(isAlbum){play();return}const front=document.getElementById('yorozuFront');const setup=document.body.classList.contains('setup-screen');if(front&&!front.hidden||!setup)stop();else play()}
+function play(){ensure();if(started)return;started=true;active.currentTime=0;active.volume=.65;active.play().catch(()=>{started=false});cancelAnimationFrame(raf);loop()}
+function stop(){if(!a)return;started=false;cancelAnimationFrame(raf);for(const el of [a,b]){el.pause();el.currentTime=0;el.volume=.65}active=a;next=b}
+function sync(){const front=document.getElementById('yorozuFront');const setup=document.body.classList.contains('setup-screen');if(front&&!front.hidden||!setup)stop();else play()}
 window.YorozuSelectionBGM={sync,play,stop};
-if(isAlbum){document.addEventListener('pointerdown',play,{once:true});document.addEventListener('keydown',play,{once:true});}
-else{document.addEventListener('pointerdown',()=>setTimeout(sync,0));document.addEventListener('keydown',()=>setTimeout(sync,0));}
-document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});window.addEventListener('pagehide',save);
-setInterval(()=>{if(started)save();if(!isAlbum)sync()},500);
-if(isAlbum)play();
+ensure();
+document.addEventListener('pointerdown',()=>{sync();setTimeout(sync,0)},true);
+document.addEventListener('keydown',()=>setTimeout(sync,0));
+setInterval(sync,250);
 })();
