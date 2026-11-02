@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const SRC='./audio/character_select_bgm.m4a',FADE=3;
 let a=null,b=null,active=null,next=null,started=false,raf=0;
-function level(){try{const n=localStorage.getItem('yorozu-title-volume-v1');return n===null?.35:Math.max(0,Math.min(1,Number(n)/100||0))}catch(e){return .35}}
+function level(){try{const n=localStorage.getItem('yorozu-title-volume-v1');return n===null ? .35 :Math.max(0,Math.min(1,Number(n)/100||0))}catch(e){return .35}}
 let mix=level();
 function make(){const el=new Audio();el.preload='auto';el.volume=mix;el.src=SRC;el.load();return el}
 function ensure(){if(a)return;a=make();b=make();active=a;next=b}
