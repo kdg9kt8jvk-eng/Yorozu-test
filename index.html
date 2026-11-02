@@ -1815,17 +1815,17 @@ function cpuBreakthroughThreat(){
  return {king,urgent:!!goal.r||king.r===0,critical:king.r<=1,near:king.r<=2};
 }
 function cpuEmergencyScore(a){
- const t=cpuBreakthroughThreat();if(!t||!t.near)return a.score;
+ const t=cpuBreakthroughThreat();if(!t||!t.near)return 0;
  const k=t.king,urgent=t.urgent,critical=t.critical;
  if(a.kind==='attack'){
   if(a.r===k.r&&a.c===k.c){
    const total=a.spend+(aura(a.p)?1:0)+(flank(a.p,k)?1:0);
-   return a.score+(total>=k.hp?100000:urgent?2800:critical?1100:300);
+   return total>=k.hp?100000:urgent?2800:critical?1100:300;
   }
-  return a.score-(urgent?2400:critical?350:35);
+  return -(urgent?2400:critical?350:35);
  }
  const before=cpuDistance(a.p,k),after=cpuDistance({r:a.r,c:a.c},k);
- let score=a.score;
+ let score=0;
  if(isKing(a.p)){
   // Do not sacrifice the defending king's safety to chase a competing breakthrough.
   return score-(urgent?2300:critical?450:0);
@@ -1887,8 +1887,53 @@ function cpuRoyalPriority(a){
  }
  return 0;
 }
+
+// Strong CPU: evaluate direct king threats and next-turn counterattacks without changing board state.
+function cpuStrategicScore(a){
+ if(cpuLevel()<3)return 0;
+ const red=pieces.filter(p=>p.side==='r'&&p.hp>0),blueKing=pieces.find(p=>p.side==='b'&&isKing(p));
+ const redKing=red.find(isKing);
+ if(!blueKing||!redKing)return 0;
+ if(a.kind==='attack'){
+  const target=red.find(p=>p.r===a.r&&p.c===a.c);
+  if(!target)return 0;
+  const power=a.spend+(aura(a.p)?1:0)+(flank(a.p,target)?1:0);
+  const lethal=power>=target.hp;
+  const spare=ap-a.spend;
+  let score=lethal?75+Math.min(5,target.coins||0)*12:power*6;
+  if(target===redKing)score+=lethal?500000:Math.min(power,target.hp)*35;
+  if(lethal&&cpuDistance(target,blueKing)<=2)score+=85;
+  if(!lethal&&spare===0&&target.hp-power>=3)score-=18;
+  if(a.p.hp<=2&&red.some(e=>e!==target&&cpuDistance(e,a.p)===1))score+=lethal?35:-20;
+  return score;
+ }
+ const p=a.p,dest={r:a.r,c:a.c},origin={r:p.r,c:p.c};
+ let score=0;
+ // Opponent can attack from its current square on the next turn.
+ const threats=red.filter(e=>e!==p&&cpuDistance(e,dest)===1&&direction(e,dest.r,dest.c)>=0&&val(e,direction(e,dest.r,dest.c))>0);
+ const maxHit=threats.reduce((v,e)=>Math.max(v,val(e,direction(e,dest.r,dest.c))+(cpuDistance(e,redKing)===1?1:0)),0);
+ const totalHit=threats.reduce((v,e)=>v+val(e,direction(e,dest.r,dest.c)),0);
+ if(maxHit>=p.hp)score-=isKing(p)?25000:300+Math.min(5,p.coins||0)*30;
+ else if(totalHit>=p.hp)score-=isKing(p)?14000:160;
+ else score-=totalHit*(isKing(p)?90:15);
+ if(isKing(p)){
+  score+=(dest.r-origin.r)*35;
+  if(dest.r===4&&!threats.length)score+=150;
+  if(dest.r===5)score+=1000000;
+  if(dest.r<=origin.r)score-=35;
+ }else{
+  const kingDist=cpuDistance(dest,redKing),oldDist=cpuDistance(origin,redKing);
+  if(redKing.r<=2)score+=(oldDist-kingDist)*90;
+  if(kingDist===1&&val(p,direction(dest,redKing.r,redKing.c))>0&&!p.attacked)score+=redKing.r<=2?250:75;
+  const allyDist=cpuDistance(dest,blueKing);
+  if(allyDist===1&&!p.attacked)score+=28;
+ }
+ // Avoid wasting the entire die on a move that accomplishes little.
+ if(a.cost>=ap&&score<50&&cpuDistance(dest,redKing)>2)score-=18;
+ return score;
+}
 function cpuTacticalScore(a){
- let score=cpuEmergencyScore(a)+cpuKingSafetyAfterMove(a)+cpuRoyalPriority(a);
+ let score=a.score+cpuEmergencyScore(a)+cpuKingSafetyAfterMove(a)+cpuRoyalPriority(a)+cpuStrategicScore(a);
  const red=pieces.filter(x=>x.side==='r'),blue=pieces.filter(x=>x.side==='b');
  const redKing=red.find(isKing),blueKing=blue.find(isKing);
  if(a.kind==='attack'){
