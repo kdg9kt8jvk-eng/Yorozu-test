@@ -1339,6 +1339,44 @@ function moveCost(p,r,c){const plan=jumpPlan(p,r,c);return plan?plan.cost:Infini
 function movementUse(p,r,c){return moveCost(p,r,c)}
 function recordJump(p,r,c){const partners=jumpPartners(p,r,c);if(partners)partners.forEach(q=>jumpPairs.add(jumpKey(p,q)))}
 function can(p,r,c,kind){if(!p||!rolled||ap<1||p.side!==side||!inside(r,c))return false;const i=direction(p,r,c);if(i<0||val(p,i)<1)return false;const q=at(r,c),dist=Math.max(Math.abs(r-p.r),Math.abs(c-p.c));if(kind==='attack')return (!p.attacked||p.attackTarget===q?.id)&&dist===1&&!!q&&q.side!==side&&attackLimit(p,i)>=1;return !p.moved&&!q&&moveCost(p,r,c)<=ap&&(p.usedDirs[i]||0)+movementUse(p,r,c)<=val(p,i)}
+
+// Local battle record dashboard (cloud history requires a separate authenticated read API).
+function renderYorozuStatsDashboard(){
+ const history=readResults().filter(m=>m&&typeof m==='object');
+ const total=history.length,wins=history.filter(m=>m.winner==='r').length;
+ $('ysTotal').textContent=String(total);$('ysWins').textContent=String(wins);
+ $('ysRate').textContent=total?Math.round(wins/total*100)+'%':'—';
+ const cpu=$('ysCpu'),recent=$('ysRecent');cpu.replaceChildren();recent.replaceChildren();
+ const levels=[['cpu-easy','初級'],['cpu-mid','中級'],['cpu-hard','上級']];
+ for(const [key,label] of levels){
+  const games=history.filter(m=>m.mode===key),w=games.filter(m=>m.winner==='r').length;
+  const row=document.createElement('div');row.className='stats-row';
+  const left=document.createElement('span');left.textContent=label;
+  const right=document.createElement('span');right.textContent=games.length+'戦 '+w+'勝 '+(games.length?Math.round(w/games.length*100)+'%':'—');
+  row.append(left,right);cpu.append(row);
+ }
+ if(!total){const p=document.createElement('p');p.className='stats-empty';p.textContent='まだ対戦履歴がありません。1試合プレイすると記録されます。';recent.append(p)}
+ for(const m of history.slice(0,12)){
+  const row=document.createElement('div');row.className='stats-row';
+  const left=document.createElement('span');left.textContent=(m.winner==='r'?'🔴 赤軍勝利':m.winner==='b'?'🔵 青軍勝利':'引き分け')+' · '+(m.mode?.startsWith('cpu')?'CPU戦':'2人対戦');
+  const right=document.createElement('small');right.textContent=(m.time?new Date(m.time).toLocaleDateString('ja-JP'):'日時不明')+' · '+(m.turns??'—')+'手';
+  row.append(left,right);recent.append(row);
+ }
+}
+function mountYorozuStatsDashboard(){
+ if($('yorozuStatsOpen'))return;
+ document.head.insertAdjacentHTML('beforeend',"<style id=\"yorozu-stats-style\">\n#yorozuStatsOpen{position:fixed;right:16px;bottom:16px;z-index:9000;border:2px solid #f7ce70;border-radius:999px;background:linear-gradient(#9d3034,#541b36);color:#fff;padding:12px 20px;font-weight:900;font-size:15px;box-shadow:0 5px 0 #301523,0 8px 22px #0008;cursor:pointer}\n#yorozuStatsModal[hidden]{display:none!important}\n#yorozuStatsModal{position:fixed;inset:0;z-index:100000;background:#090d1bd9;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}\n#yorozuStatsModal .stats-window{background:linear-gradient(155deg,#242b47,#111728 75%);color:#fff5da;border:3px solid #eac375;border-radius:20px;box-shadow:0 15px 60px #000b;max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:22px;box-sizing:border-box}\n#yorozuStatsModal .stats-top{display:flex;justify-content:space-between;align-items:center;gap:12px}\n#yorozuStatsModal h2{color:#ffe28a;font-size:clamp(21px,4vw,30px);margin:0}\n#yorozuStatsModal .stats-close{background:#8a2934;color:white;border:1px solid #f6c67a;border-radius:12px;padding:9px 15px;font-weight:900;cursor:pointer}\n#yorozuStatsModal .stats-note{color:#b9c4d8;font-size:12px;margin:12px 0 18px}\n#yorozuStatsModal .stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}\n#yorozuStatsModal .stats-tile{background:#111c32;border:1px solid #a98b52;border-radius:13px;padding:15px 8px;text-align:center}\n#yorozuStatsModal .stats-tile strong{display:block;color:#ffda72;font-size:clamp(22px,5vw,36px);font-variant-numeric:tabular-nums}\n#yorozuStatsModal .stats-tile span{font-size:12px;color:#e2e6ee}\n#yorozuStatsModal .stats-section{margin-top:19px}\n#yorozuStatsModal .stats-section h3{color:#ffdd88;margin:0 0 9px;font-size:17px}\n#yorozuStatsModal .stats-row{display:flex;justify-content:space-between;gap:12px;padding:10px;border-bottom:1px solid #ffffff24;font-size:13px}\n#yorozuStatsModal .stats-row small{color:#aebed4}\n#yorozuStatsModal .stats-empty{color:#bfc9dc;padding:16px 8px}\n@media(max-width:480px){#yorozuStatsOpen{right:9px;bottom:9px;padding:9px 13px;font-size:13px}#yorozuStatsModal .stats-window{padding:15px}#yorozuStatsModal .stats-grid{gap:6px}#yorozuStatsModal .stats-tile{padding:12px 4px}}\n</style>");
+ document.body.insertAdjacentHTML('beforeend',"<button id=\"yorozuStatsOpen\" type=\"button\">🏆 戦績を見る</button>\n<div id=\"yorozuStatsModal\" hidden role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"yorozuStatsTitle\"><div class=\"stats-window\">\n<div class=\"stats-top\"><h2 id=\"yorozuStatsTitle\">🏆 ヨロズモン戦績</h2><button id=\"yorozuStatsClose\" class=\"stats-close\" type=\"button\">✕ 閉じる</button></div>\n<p class=\"stats-note\">この端末・ブラウザに保存された対戦履歴です。Supabaseに保存された全件の集計ではありません。</p>\n<div class=\"stats-grid\"><div class=\"stats-tile\"><strong id=\"ysTotal\">0</strong><span>総対戦数</span></div><div class=\"stats-tile\"><strong id=\"ysWins\">0</strong><span>赤軍の勝利</span></div><div class=\"stats-tile\"><strong id=\"ysRate\">—</strong><span>赤軍の勝率</span></div></div>\n<div class=\"stats-section\"><h3>🎮 CPU戦の成績</h3><div id=\"ysCpu\"></div></div>\n<div class=\"stats-section\"><h3>📜 最近の対戦</h3><div id=\"ysRecent\"></div></div>\n</div></div>");
+ const modal=$('yorozuStatsModal');
+ const close=()=>{modal.hidden=true};
+ $('yorozuStatsOpen').addEventListener('click',()=>{renderYorozuStatsDashboard();modal.hidden=false});
+ $('yorozuStatsClose').addEventListener('click',close);
+ modal.addEventListener('click',e=>{if(e.target===modal)close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)close()});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountYorozuStatsDashboard);
+else mountYorozuStatsDashboard();
+
 const RESULTS_KEY='yorozumon-results-v1';
 let matchRoster=null,matchRecorded=false,matchStats={r:{damage:0,kills:0},b:{damage:0,kills:0}};
 function readResults(){try{const data=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');return Array.isArray(data)?data:[]}catch(e){return []}}
