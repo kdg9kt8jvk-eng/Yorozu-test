@@ -1905,6 +1905,59 @@ function cpuBreakthroughThreat(){
  if(!king)return null;
  return {king,urgent:!!goal.r||king.r===0,critical:king.r<=1,near:king.r<=2};
 }
+// Predict the opponent king's open approach lanes before the final row.
+// This is a conservative one-ply geometric forecast; it does not change legal moves.
+function cpuBreakthroughForecast(){
+ const king=pieces.find(p=>p.side==='r'&&isKing(p));
+ if(!king)return null;
+ const lanes=[];
+ for(let i=0;i<8;i++){
+  const dr=DIRS[i][0],dc=DIRS[i][1],range=val(king,i);
+  if(dr>=0||range<1)continue;
+  for(let n=1;n<=Math.min(range,6);n++){
+   const r=king.r+dr*n,c=king.c+dc*n;
+   if(!inside(r,c))break;
+   const occupant=at(r,c);
+   if(occupant)break; // An occupied square blocks this direct lane.
+   lanes.push({r,c,steps:n,finish:r===0});
+  }
+ }
+ return {king,lanes,immediate:lanes.some(p=>p.finish&&p.steps<=6)};
+}
+function cpuBreakthroughDefenseScore(a){
+ if(cpuLevel()<3)return 0;
+ const forecast=cpuBreakthroughForecast();
+ if(!forecast)return 0;
+ const {king,lanes,immediate}=forecast;
+ if(king.r>3)return 0;
+ const urgency=immediate?1:king.r===1?.75:king.r===2?.42:.15;
+ if(a.kind==='attack'){
+  const target=at(a.r,a.c);
+  if(target===king){
+   const damage=a.spend+(aura(a.p)?1:0)+(flank(a.p,king)?1:0);
+   return damage>=king.hp?900000:Math.round(3500*urgency+damage*90);
+  }
+  return immediate?-2200:Math.round(-160*urgency);
+ }
+ const dest={r:a.r,c:a.c},old={r:a.p.r,c:a.p.c};
+ const directBlock=lanes.some(p=>p.r===dest.r&&p.c===dest.c);
+ const oldBlock=lanes.some(p=>p.r===old.r&&p.c===old.c);
+ let score=0;
+ // Physically occupying the predicted landing lane prevents a straightforward breakthrough.
+ if(directBlock)score+=Math.round((dest.r===0?10500:dest.r===1?5200:1900)*urgency);
+ if(oldBlock&&!directBlock)score-=Math.round(2200*urgency);
+ const dist=cpuDistance(dest,king),dir=direction(dest,king.r,king.c);
+ const canStrike=dist===1&&dir>=0&&val(a.p,dir)>0&&!a.p.attacked;
+ if(canStrike)score+=Math.round(1250*urgency);
+ if(!isKing(a.p)){
+  // Keep defenders on the threatened half of the board instead of chasing unrelated targets.
+  if(dest.r<=Math.max(2,king.r)&&dist<=2)score+=Math.round(240*urgency);
+  if(immediate&&dest.r>2&&dist>2)score-=1800;
+ }else if(immediate&&!directBlock){
+  score-=600;
+ }
+ return score;
+}
 function cpuEmergencyScore(a){
  const t=cpuBreakthroughThreat();if(!t||!t.near)return 0;
  const k=t.king,urgent=t.urgent,critical=t.critical;
@@ -2024,7 +2077,7 @@ function cpuStrategicScore(a){
  return score;
 }
 function cpuTacticalScore(a){
- let score=a.score+cpuEmergencyScore(a)+cpuKingSafetyAfterMove(a)+cpuRoyalPriority(a)+cpuStrategicScore(a);
+ let score=a.score+cpuEmergencyScore(a)+cpuBreakthroughDefenseScore(a)+cpuKingSafetyAfterMove(a)+cpuRoyalPriority(a)+cpuStrategicScore(a);
  const red=pieces.filter(x=>x.side==='r'),blue=pieces.filter(x=>x.side==='b');
  const redKing=red.find(isKing),blueKing=blue.find(isKing);
  if(a.kind==='attack'){
