@@ -1383,7 +1383,7 @@ function mountSoundSettings(){
  const refresh=()=>{summary.textContent=soundSettings.enabled?'🔊 サウンド':'🔇 ミュート';slider.disabled=!soundSettings.enabled;value.textContent=soundSettings.volume+'%'};
  toggle.onchange=()=>{soundSettings.enabled=toggle.checked;saveSoundSettings();refresh();if(toggle.checked)gameSfx('select')};
  slider.oninput=()=>{soundSettings.volume=Number(slider.value);saveSoundSettings();refresh()};
- content.append(label,volumeLabel);panel.append(summary,content);header.insertBefore(panel,document.getElementById('reset'));refresh();
+ content.append(label,volumeLabel);panel.append(summary,content);header.appendChild(panel);refresh();
 }
 let gameAudio=null,gameNoiseBuffer=null;
 function gameSfx(kind){
