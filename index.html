@@ -1356,12 +1356,34 @@ function renderResults(){
  matches.replaceChildren();const heading=document.createElement('h3');heading.textContent='最近の対戦';matches.append(heading);
  for(const m of history.slice(0,15)){const p=document.createElement('p');p.textContent=new Date(m.time).toLocaleString('ja-JP')+'｜'+(m.mode.startsWith('cpu')?'CPU戦':'2人対戦')+'｜'+(m.winner==='r'?'赤軍':'青軍')+'勝利｜'+m.reason+'｜'+m.turns+'手';matches.append(p)}
 }
+async function submitBattleResult(entry){
+ try{
+  if(typeof window.yorozuGetAuth!=='function')throw Error('認証が未準備');
+  const {data,error}=await window.yorozuGetAuth();
+  if(error||!data?.session?.access_token)throw Error('匿名ログインが未完了');
+  const payload={
+   battle_id:crypto.randomUUID(),
+   winner:entry.winner,
+   turn_count:entry.turns,
+   cpu_level:entry.mode.startsWith('cpu')?({'cpu-easy':1,'cpu-mid':2,'cpu-hard':3}[entry.mode]||1):null,
+   battle_log:[{time:entry.time,mode:entry.mode,reason:entry.reason,teams:entry.teams,stats:entry.stats}]
+  };
+  const response=await fetch('https://wbzcdpnvqepysexkqxxh.supabase.co/functions/v1/submit-battle',{
+   method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},
+   body:JSON.stringify(payload)
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.saved)throw Error('HTTP '+response.status+': '+(result.error||'保存失敗'));
+  console.info('対戦結果のオンライン保存成功');
+ }catch(error){console.warn('対戦結果のオンライン保存失敗（端末内には保存済み）',error)}
+}
 function recordMatch(side,reason){
  if(matchRecorded||!matchRoster)return;
  matchRecorded=true;
  const entry={time:new Date().toISOString(),mode:gameMode,winner:side,reason,turns:turnNumber+1,teams:matchRoster,stats:JSON.parse(JSON.stringify(matchStats))};
  try{const history=readResults();history.unshift(entry);localStorage.setItem(RESULTS_KEY,JSON.stringify(history.slice(0,200)))}catch(e){console.warn('対戦成績の保存に失敗',e)}
  renderResults();
+ void submitBattleResult(entry);
 }
 let finaleAudio=null;
 // Lightweight synthesized SFX: no external audio files, safe to skip if blocked.
