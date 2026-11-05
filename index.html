@@ -1300,7 +1300,36 @@ const BASE={K:{attribute:'恐竜',name:'超竜帝ティラノカイザー',icon:
 const ORIGINAL=JSON.parse(JSON.stringify(window.YOROZUMON_ROSTER||[]));let ROSTER=JSON.parse(JSON.stringify(ORIGINAL));const STORAGE_KEY='yorozumon-roster-v1';const ICONS={'恐竜':'🦖','ラーメン':'🍜','寿司':'🍣','カレー':'🍛','ハンバーガー':'🍔','おむすび':'🍙','音楽':'🎸','ゲーム':'🎮','警察官':'👮','医者':'🩺','歯磨き':'🦷','電気':'⚡','星':'⭐'};function syncRoster(){for(const key of Object.keys(BASE))if(key.startsWith('YM')||key.startsWith('CUSTOM'))delete BASE[key];for(const c of ROSTER)BASE[c.id]={...c,icon:ICONS[c.attribute]||'⭐'}}syncRoster();const IMAGE_KEY='yorozumon-images-v1';let IMAGES={};try{IMAGES=JSON.parse(localStorage.getItem(IMAGE_KEY)||'{}')}catch(e){}const REMOTE_IMAGE_BASE='./images/';const remoteImage=id=>/^[A-Za-z0-9_-]+$/.test(id)?REMOTE_IMAGE_BASE+id+'.webp':null;
 const optimizedImage=(id,small=false)=>/^[A-Za-z0-9_-]+$/.test(id)?(small?'./images/thumbnails/':'./characters/')+id+'.webp':null;
 const pieceImage=(id,small=false)=>IMAGES[id]||optimizedImage(id,small)||remoteImage(id);
-document.addEventListener('error',e=>{const img=e.target;if(!(img instanceof HTMLImageElement)||img.dataset.yorozuFallbackDone==='1')return;const match=img.src.match(/\/(?:thumbnails|characters)\/(YM\d+)\.webp(?:[?#].*)?$/i);if(match){img.dataset.yorozuFallbackDone='1';img.src=remoteImage(match[1])}},true);function imageFallback(img,id){if(img.dataset.fallback==='1'){img.replaceWith(document.createTextNode(BASE[id]?.icon||'⭐'));return}img.dataset.fallback='1';img.src=IMAGES[id]&&img.src!==IMAGES[id]?IMAGES[id]:'';if(!img.src||img.src===location.href){img.replaceWith(document.createTextNode(BASE[id]?.icon||'⭐'))}}let actionHistory=[],battleLog=[],turnNumber=0;function logAction(message,kind='action'){battleLog.push({message,kind});if(battleLog.length>250)battleLog.shift();renderLog()}function renderLog(){const area=$('battleLog');if(!area)return;area.replaceChildren();for(const entry of battleLog.slice(-80)){const p=document.createElement('p');p.textContent=entry.message;if(entry.kind==='turn')p.className='turn-entry';area.append(p)}area.scrollTop=area.scrollHeight}const pos=(r,c)=>'ABCDEF'[c]+(r+1);const isKing=p=>BASE[p.type].role==='キング';function saveAction(){actionHistory.push({pieces:JSON.parse(JSON.stringify(pieces)),selectedId:selected?.id||null,side,ap,rolled,mode,damage,goal:{...goal},winner,rotationAvailable,rotationUsed,jumps:[...jumpPairs],message:$('msg').textContent,logLength:battleLog.length});if(actionHistory.length>30)actionHistory.shift()}function undoAction(){if(phase!=='battle'||cpuBusy||animationBusy||!actionHistory.length||(isCpuMode()&&side==='b'))return;const a=actionHistory.pop();pieces=a.pieces;selected=pieces.find(p=>p.id===a.selectedId)||null;side=a.side;ap=a.ap;rolled=a.rolled;mode=a.mode;damage=a.damage;goal={...a.goal};winner=a.winner;rotationAvailable=a.rotationAvailable;rotationUsed=a.rotationUsed;jumpPairs=new Set(a.jumps);battleLog.length=a.logLength;logAction('↶ 直前の行動を取り消し（AP・HP復元）','turn');say('↶ 直前の行動を取り消しました（AP・HPも復元）');render()}
+document.addEventListener('error',e=>{const img=e.target;if(!(img instanceof HTMLImageElement)||img.dataset.yorozuFallbackDone==='1')return;const match=img.src.match(/\/(?:thumbnails|characters)\/(YM\d+)\.webp(?:[?#].*)?$/i);if(match){img.dataset.yorozuFallbackDone='1';img.src=remoteImage(match[1])}},true);function imageFallback(img,id){if(img.dataset.fallback==='1'){img.replaceWith(document.createTextNode(BASE[id]?.icon||'⭐'));return}img.dataset.fallback='1';img.src=IMAGES[id]&&img.src!==IMAGES[id]?IMAGES[id]:'';if(!img.src||img.src===location.href){img.replaceWith(document.createTextNode(BASE[id]?.icon||'⭐'))}}let actionHistory=[],battleLog=[],turnNumber=0;
+const AI_MEMORY_KEY='yorozumon-cpu-learning-v1';
+let detailedBattleLog=[],cpuActionFeatures=[];
+function boardSnapshot(){return pieces.map(p=>[p.side,p.type,p.r,p.c,p.hp,p.coins,p.rotation||0])}
+function recordBattleStep(event,detail={}){
+ if(phase!=='battle'||winner||detailedBattleLog.length>=160)return;
+ detailedBattleLog.push({t:turnNumber,s:side,ap,e:event,...detail,b:boardSnapshot()});
+}
+function cpuFeature(a){
+ if(a.kind==='attack'){const q=at(a.r,a.c);return q&&isKing(q)?'attack-king':'attack-unit'}
+ if(isKing(a.p))return 'move-king';
+ const redKing=pieces.find(p=>p.side==='r'&&isKing(p));
+ return redKing&&Math.max(Math.abs(a.r-redKing.r),Math.abs(a.c-redKing.c))<=1?'move-pressure':'move-position';
+}
+function cpuLearnedBonus(a){
+ if(cpuLevel()<2)return 0;
+ const feature=cpuFeature(a),model=readCpuLearning(),stat=model[feature];
+ if(!stat||stat.n<4)return 0;
+ return Math.max(-12,Math.min(12,((stat.w+2)/(stat.n+4)-.5)*32));
+}
+function readCpuLearning(){try{return JSON.parse(localStorage.getItem(AI_MEMORY_KEY)||'{}')||{}}catch(e){return {}}}
+function learnFromMatch(winnerSide){
+ if(!isCpuMode()||!cpuActionFeatures.length)return;
+ const model=readCpuLearning(),outcome=winnerSide==='b'?1:0;
+ for(const f of cpuActionFeatures){
+  const item=model[f]||{n:0,w:0};item.n=Math.min(1000,item.n+1);item.w=Math.min(item.n,item.w+outcome);model[f]=item;
+ }
+ try{localStorage.setItem(AI_MEMORY_KEY,JSON.stringify(model))}catch(e){}
+}
+function logAction(message,kind='action'){battleLog.push({message,kind});if(battleLog.length>250)battleLog.shift();renderLog()}function renderLog(){const area=$('battleLog');if(!area)return;area.replaceChildren();for(const entry of battleLog.slice(-80)){const p=document.createElement('p');p.textContent=entry.message;if(entry.kind==='turn')p.className='turn-entry';area.append(p)}area.scrollTop=area.scrollHeight}const pos=(r,c)=>'ABCDEF'[c]+(r+1);const isKing=p=>BASE[p.type].role==='キング';function saveAction(){actionHistory.push({pieces:JSON.parse(JSON.stringify(pieces)),selectedId:selected?.id||null,side,ap,rolled,mode,damage,goal:{...goal},winner,rotationAvailable,rotationUsed,jumps:[...jumpPairs],message:$('msg').textContent,logLength:battleLog.length});if(actionHistory.length>30)actionHistory.shift()}function undoAction(){if(phase!=='battle'||cpuBusy||animationBusy||!actionHistory.length||(isCpuMode()&&side==='b'))return;const a=actionHistory.pop();pieces=a.pieces;selected=pieces.find(p=>p.id===a.selectedId)||null;side=a.side;ap=a.ap;rolled=a.rolled;mode=a.mode;damage=a.damage;goal={...a.goal};winner=a.winner;rotationAvailable=a.rotationAvailable;rotationUsed=a.rotationUsed;jumpPairs=new Set(a.jumps);battleLog.length=a.logLength;logAction('↶ 直前の行動を取り消し（AP・HP復元）','turn');say('↶ 直前の行動を取り消しました（AP・HPも復元）');render()}
 let pieces,side,ap,rolled,selected,mode,winner,damage,goal,gameMode="cpu",cpuBusy=false,jumpPairs,rotationAvailable=false,rotationUsed=false,phase='setup',setupSide='r',setupChoice='K',setupPlaced={r:[],b:[]};
 const isCpuMode=()=>gameMode.startsWith('cpu');const cpuLevel=()=>gameMode==='cpu-hard'?3:gameMode==='cpu-mid'?2:1;
 const at=(r,c)=>pieces.find(p=>p.r===r&&p.c===c),inside=(r,c)=>r>=0&&r<6&&c>=0&&c<6;
@@ -1404,7 +1433,7 @@ async function submitBattleResult(entry){
    winner:entry.winner,
    turn_count:entry.turns,
    cpu_level:entry.mode.startsWith('cpu')?({'cpu-easy':1,'cpu-mid':2,'cpu-hard':3}[entry.mode]||1):null,
-   battle_log:[{time:entry.time,mode:entry.mode,reason:entry.reason,teams:entry.teams,stats:entry.stats}]
+   battle_log:[{time:entry.time,mode:entry.mode,reason:entry.reason,teams:entry.teams,stats:entry.stats,steps:entry.steps||[]}]
   };
   const response=await fetch('https://wbzcdpnvqepysexkqxxh.supabase.co/functions/v1/submit-battle',{
    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},
@@ -1418,7 +1447,8 @@ async function submitBattleResult(entry){
 function recordMatch(side,reason){
  if(matchRecorded||!matchRoster)return;
  matchRecorded=true;
- const entry={time:new Date().toISOString(),mode:gameMode,winner:side,reason,turns:turnNumber+1,teams:matchRoster,stats:JSON.parse(JSON.stringify(matchStats))};
+ learnFromMatch(side);
+ const entry={time:new Date().toISOString(),mode:gameMode,winner:side,reason,turns:turnNumber+1,teams:matchRoster,stats:JSON.parse(JSON.stringify(matchStats)),steps:detailedBattleLog.slice()};
  try{const history=readResults();history.unshift(entry);localStorage.setItem(RESULTS_KEY,JSON.stringify(history.slice(0,200)))}catch(e){console.warn('対戦成績の保存に失敗',e)}
  renderResults();
  void submitBattleResult(entry);
@@ -1534,6 +1564,7 @@ function tossDie(isCpu=false){
 function finishDie(){
  if(!dicePending||$('diceContinue').hidden)return;
  const {number,isCpu}=dicePending;dicePending=null;$('diceOverlay').hidden=true;ap=number;rolled=true;rotationAvailable=ap===1;rotationUsed=false;
+ recordBattleStep('dice',{value:ap});
  logAction('🎲 '+(isCpu?'CPU':side==='r'?'赤軍':'青軍')+'の出目 '+ap,'turn');
  say(isCpu?'🤖 CPUの出目は '+ap+'！':ap===1?'出目は1！ 味方を選び、回転ボタンを何度でも押して向きを決められます（AP消費なし）':'出目は '+ap+'！ 行動開始！');
  render();if(isCpu)runCpuActions();
@@ -1555,7 +1586,7 @@ $('coinContinue').addEventListener('click',()=>{
  say((side==='r'?'🔴 赤軍':'🔵 青軍')+'先攻！ '+(isCpuMode()&&side==='b'?'CPUが行動します':'サイコロを振って開始！'));render();
  if(isCpuMode()&&side==='b')startCpu();
 });
-function finishSetup(){matchRoster=['r','b'].map(s=>({side:s,ids:setupPlaced[s].map(p=>p.type)}));matchRecorded=false;matchStats={r:{damage:0,kills:0},b:{damage:0,kills:0}};actionHistory=[];logAction('⚔️ 対戦開始','turn');phase='battle';side='r';selected=null;ap=0;rolled=false;say('コイントスで先攻を決めます！');render();tossCoin()}
+function finishSetup(){matchRoster=['r','b'].map(s=>({side:s,ids:setupPlaced[s].map(p=>p.type)}));matchRecorded=false;matchStats={r:{damage:0,kills:0},b:{damage:0,kills:0}};detailedBattleLog=[];cpuActionFeatures=[];actionHistory=[];logAction('⚔️ 対戦開始','turn');phase='battle';side='r';selected=null;ap=0;rolled=false;say('コイントスで先攻を決めます！');render();tossCoin()}
 function setupConfirm(){const list=setupPlaced[setupSide];if(list.length!==4||list.filter(p=>isKing(p)).length!==1||new Set(list.map(p=>p.type)).size!==4){say('王1体＋通常キャラ3体を配置してください');return}if(setupSide==='r'){setupSide='b';draftAttribute='';setupChoice=ROSTER.find(c=>c.role==='キング').id;if(isCpuMode()){(()=>{const kings=ROSTER.filter(c=>c.role==='キング');const king=kings[Math.floor(Math.random()*kings.length)];const pool=ROSTER.filter(c=>c.role!=='キング');const same=pool.filter(c=>c.attribute===king.attribute).sort(()=>Math.random()-.5);const others=pool.filter(c=>c.attribute!==king.attribute).sort(()=>Math.random()-.5);const count=Math.random()<.72?Math.min(3,same.length):Math.floor(Math.random()*Math.min(4,same.length+1));return [king,...same.slice(0,count),...others.slice(0,3-count)]})().forEach((c,i)=>{const p=makePiece('b',c.id,0,i+1);pieces.push(p);setupPlaced.b.push(p)});finishSetup()}else{say('🔵 青軍の配置を始めてください');render()}}else finishSetup()}
 let draftSearch='',draftAttribute='',draftRole='',draftSort='default';
 let setupStage=null,setupStageAnchors=[];
@@ -2094,6 +2125,8 @@ function moveOptions(p){
 }
 function cpuAct(a){
  const p=a.p;selected=p;mode=a.kind;let pendingMove=null,pendingHit=null;
+ cpuActionFeatures.push(cpuFeature(a));
+ recordBattleStep(a.kind,{actor:p.type,from:[p.r,p.c],to:[a.r,a.c],cost:a.cost||a.spend||0});
  if(a.kind==='move'){
   pendingMove={p,origin:{r:p.r,c:p.c},route:movementRoute(p,a.r,a.c)};
   p.usedDirs[direction(p,a.r,a.c)]+=movementUse(p,a.r,a.c);recordJump(p,a.r,a.c);
@@ -2117,7 +2150,7 @@ function runCpuActions(){
   const actions=[];for(const p of pieces.filter(x=>x.side==='b')){actions.push(...attackOptions(p),...moveOptions(p))}
   if(!actions.length){cpuBusy=false;nextTurn();return}
   const threat=cpuBreakthroughThreat();
-  for(const a of actions)a.score=cpuTacticalScore(a);
+  for(const a of actions)a.score=cpuTacticalScore(a)+cpuLearnedBonus(a);
   if(threat?.urgent&&steps===1)logAction('🤖 敵王の突破を阻止するため迎撃優先');
   actions.sort((a,b)=>b.score-a.score);
   const pick=cpuLevel()===1&&actions.length>1&&Math.random()<.28?actions[Math.min(actions.length-1,1+Math.floor(Math.random()*Math.min(3,actions.length-1)))]:actions[0];
