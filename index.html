@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1d2435"><title>ヨロズモン大戦 v3.3.0</title><style>.yorozu-album-link{display:inline-flex;align-items:center;gap:6px;margin:6px 0 12px;padding:10px 15px;background:linear-gradient(120deg,#9a6420,#e4b55e);border:2px solid #ffe2a1;border-radius:10px;color:#241609;text-decoration:none;font-weight:900;box-shadow:0 4px 14px #0005}.yorozu-album-link:hover{filter:brightness(1.12)}/* v3.0.0 cinematic battle feedback: overlay-only, no board layout changes */
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1d2435"><title>ヨロズモン大戦 v3.4.0</title><style>.yorozu-album-link{display:inline-flex;align-items:center;gap:6px;margin:6px 0 12px;padding:10px 15px;background:linear-gradient(120deg,#9a6420,#e4b55e);border:2px solid #ffe2a1;border-radius:10px;color:#241609;text-decoration:none;font-weight:900;box-shadow:0 4px 14px #0005}.yorozu-album-link:hover{filter:brightness(1.12)}/* v3.0.0 cinematic battle feedback: overlay-only, no board layout changes */
 .yorozu-impact-screen{position:fixed;inset:0;z-index:9990;pointer-events:none;background:radial-gradient(circle at var(--impact-x) var(--impact-y),#fff8b8aa 0%,#ffb43d44 18%,transparent 55%);animation:yorozuImpactScreen 440ms ease-out forwards}
 .yorozu-impact-screen.ko{background:radial-gradient(circle at var(--impact-x) var(--impact-y),#fff 0%,#ffdf86c9 13%,#f74e3655 40%,transparent 72%);animation-duration:650ms}
 @keyframes yorozuImpactScreen{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
@@ -131,6 +131,20 @@ body.battle-screen .yorozu-ap-pip.charging{animation:yorozuCharge .33s cubic-bez
 @keyframes yorozuDiceSplash{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-20deg)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.35) rotate(6deg)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-75%) scale(1)}}
 @media(max-width:700px){body.battle-screen .yorozu-duel-hud{grid-template-columns:26px minmax(0,1fr) auto!important;min-height:72px!important}body.battle-screen .yorozu-duel-hud .yorozu-duel-mark{width:25px!important;height:25px!important;font-size:15px!important}body.battle-screen .yorozu-duel-hud #turn{font-size:clamp(12px,3vw,16px)!important}}
 @media(prefers-reduced-motion:reduce){.yorozu-turn-announcement,.yorozu-dice-splash,.yorozu-king-finish,.yorozu-king-finish strong{animation-duration:180ms!important}.yorozu-combat-actor.attacker,.yorozu-combat-actor.victim{animation-duration:160ms!important}.yorozu-ap-pip.charging{animation:none}}
+/* v3.4.0 gameplay cinematics */
+body.battle-screen .yorozu-duel-hud #turn{font-size:clamp(19px,1.9vw,30px)!important;white-space:nowrap!important;line-height:1.1!important;font-weight:1000!important;word-break:keep-all!important}
+.yorozu-dice-landed #diceCube{filter:drop-shadow(0 0 24px #ffe99c) brightness(1.5)}
+.yorozu-dice-landed .dice-stage::after{content:"";position:absolute;inset:10%;border:5px solid #ffe69c;border-radius:50%;pointer-events:none;animation:yorozuDiceShock .75s ease-out both}
+@keyframes yorozuDiceShock{0%{transform:scale(.25);opacity:1;box-shadow:0 0 25px #fff}100%{transform:scale(2.3);opacity:0;box-shadow:0 0 60px #ffae4c}}
+.yorozu-combo-tag{position:absolute;z-index:30;left:50%;top:-35%;transform:translateX(-50%);white-space:nowrap;font-weight:1000;font-size:clamp(22px,4vw,45px);color:#fff1a3;text-shadow:0 0 14px #ff6d1b,3px 4px 0 #7c231a;animation:yorozuComboPop 850ms ease-out both}
+@keyframes yorozuComboPop{0%{transform:translateX(-50%) scale(.25);opacity:0}25%{transform:translateX(-50%) scale(1.35);opacity:1}100%{transform:translateX(-50%) translateY(-40px) scale(1);opacity:0}}
+.hit-overlay.combo-2 .hit-flash,.hit-overlay.combo-3 .hit-flash{filter:brightness(1.7) saturate(1.5)}
+.hit-overlay.combo-3 .yorozu-impact-ring{filter:drop-shadow(0 0 18px #ff541c) brightness(1.7)}
+.yorozu-impact-screen.combo-impact{filter:brightness(1.5)}
+.yorozu-king-finish{z-index:30000!important;animation-duration:1750ms!important;background:radial-gradient(circle,#fff4b688 0%,#b84b3855 26%,#060617e8 80%)!important}
+.yorozu-king-finish strong{animation-duration:1500ms!important}
+@media(max-width:700px){body.battle-screen .yorozu-duel-hud #turn{font-size:clamp(17px,4.5vw,23px)!important}}
+@media(prefers-reduced-motion:reduce){.yorozu-combo-tag,.yorozu-dice-landed .dice-stage::after{animation-duration:120ms!important}}
 </style><style>:root{font-family:system-ui,-apple-system,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;color:#f5f3eb;background:#101827;font-synthesis:none}*{box-sizing:border-box}body{margin:0;padding:14px}.app{max-width:640px;margin:0 auto}header,.spread{display:flex;justify-content:space-between;align-items:center;gap:12px}header{margin-bottom:14px}h1{font-size:clamp(20px,5vw,30px);margin:4px 0}small{color:#e4b65e;font-weight:800;font-size:10px;letter-spacing:1px}button{cursor:pointer;touch-action:manipulation;border:1px solid #596375;border-radius:9px;padding:11px 13px;color:#fff;background:#283449;font-weight:750;font-size:14px}button:disabled{opacity:.4;cursor:not-allowed}.primary{background:#ad751c;border-color:#e5aa42}.panel{background:#1d293c;border:1px solid #34435b;border-radius:15px;padding:14px;margin:12px 0}.panel p{font-size:14px;line-height:1.5}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.labels{font-size:12px;font-weight:800;margin:12px 4px 5px}.board{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;background:#594736;border-radius:12px;padding:5px;box-shadow:0 10px 28px #0006}@keyframes hitShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}@keyframes hitFloat{0%{opacity:0;transform:translate(-50%,5px) scale(.7)}15%{opacity:1;transform:translate(-50%,-12px) scale(1.2)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-65px) scale(1)}}@keyframes hitFlash{0%{opacity:0}30%{opacity:.8}100%{opacity:0}}.hit-overlay{position:fixed;z-index:10000;pointer-events:none;overflow:visible}.hit-flash{position:absolute;inset:0;border-radius:9px;background:#ff4040;animation:hitFlash 380ms ease-out forwards}.hit-number{position:absolute;left:50%;top:10%;white-space:nowrap;font-weight:1000;font-size:clamp(20px,4vw,34px);color:#fff;text-shadow:0 2px 2px #510500,0 0 8px #e10,2px 3px 0 #3a0000;animation:hitFloat 720ms ease-out forwards}.hit-bonus{position:absolute;left:50%;top:68%;transform:translateX(-50%);white-space:nowrap;font-weight:900;font-size:12px;color:#ffe783;text-shadow:0 1px 3px #000,0 0 5px #000}.hit-target{position:absolute;inset:0;border:3px solid #ffdb65;border-radius:8px;animation:hitShake 330ms ease-in-out}.moving-ghost{position:absolute;z-index:30;pointer-events:none;transition:transform 190ms ease-in-out;filter:drop-shadow(0 5px 7px #0009)}.moving-ghost.jumping{filter:drop-shadow(0 13px 8px #000b) brightness(1.13)}.cell{aspect-ratio:1;min-width:0;border:0;border-radius:5px;padding:2px;display:flex;align-items:center;justify-content:center;color:#29231b}.cell.light{background:#f5e7cf}.cell.dark{background:#e7cda8}.piece{width:100%;height:100%;border:2px solid #ffffffa8;border-radius:8px;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;font-size:clamp(16px,4.8vw,28px);line-height:1.1}.piece small{font-size:clamp(8px,2.3vw,11px);color:white;letter-spacing:0}.red{background:#ba3548}.blue{background:#2768ad}.chosen{outline:3px solid #ffdb58;outline-offset:-3px}.movable{box-shadow:inset 0 0 0 4px #20a85a}.attackable{box-shadow:inset 0 0 0 4px #ef4343}.directions{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:195px;margin:10px auto}.dir{border:1px solid #5d6a7e;border-radius:6px;text-align:center;padding:7px;font-weight:800}.active{background:#5d4825!important;border-color:#e8b44c!important}.damage-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.hint,footer{font-size:12px!important;color:#adb9c8}footer{text-align:center;padding:12px 0 24px}[hidden]{display:none!important}@media(min-width:650px){body{padding:24px}.piece{font-size:29px}}
 
 .setup-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:9px 0}.setup-grid button{padding:9px 4px;font-size:12px}.setup-grid .king{grid-column:span 4}.setup-grid .chosen{border-color:#ffdb58;background:#655026}.setup-controls{display:flex;gap:8px}.setup-controls button{flex:1}.setup-cell{outline:3px dashed #d5a14b;outline-offset:-4px}.mode-label{display:block;font-size:12px;color:#e4b65e;font-weight:800;margin-bottom:5px}select{width:100%;background:#283449;border:1px solid #596375;border-radius:9px;padding:11px;color:#fff;font-size:15px;margin-bottom:14px}select:disabled{opacity:.5}
@@ -1600,6 +1614,10 @@ function gameSfx(kind){
   if(kind==='dice'){
    [0,.07,.14,.21,.28].forEach((d,i)=>{noise(d,.045,.055,900+i*300,420);tone(180+i*42,110+i*22,d,.07,'triangle',.04)});
   }
+  if(kind==='diceSix'){
+   [523,659,784,1047,1568].forEach((hz,i)=>tone(hz,hz*1.02,i*.075,.33,'sawtooth',.042));
+   noise(.05,.45,.16,1600,90);tone(175,44,.05,.55,'triangle',.18);
+  }
   if(kind==='coin'){tone(1100,1750,0,.17,'sine',.055);tone(1500,2300,.12,.23,'triangle',.05);tone(2100,1400,.29,.17,'sine',.026)}
  }catch(e){console.warn('SE playback failed',e)}
 }
@@ -1623,7 +1641,10 @@ function showFinale(side,reason){
  card.append(kicker,title,detail,close);overlay.append(card);document.body.append(overlay);
  playFinaleSound();
 }
-function win(s,reason){if(winner)return;winner=s;recordMatch(s,reason);if(!/突破|最奥列/.test(reason))kingFinishCue();setTimeout(()=>showFinale(s,reason),/突破|最奥列/.test(reason)?0:950);logAction('🏆 '+(s==='r'?'赤軍':'青軍')+'勝利：'+reason,'turn');say((s==='r'?'🔴 赤軍':'🔵 青軍')+'の勝利！🏆 '+reason)}
+function win(s,reason){if(winner)return;winner=s;recordMatch(s,reason);
+ const kingDown=!/突破|最奥列/.test(reason);
+ if(kingDown){setTimeout(kingFinishCue,650);setTimeout(()=>{if(winner===s)showFinale(s,reason)},2750)}
+ else showFinale(s,reason);logAction('🏆 '+(s==='r'?'赤軍':'青軍')+'勝利：'+reason,'turn');say((s==='r'?'🔴 赤軍':'🔵 青軍')+'の勝利！🏆 '+reason)}
 function makePiece(s,t,r,c){const b=BASE[t];return {id:s+'-'+setupPlaced[s].length,side:s,type:t,r,c,hp:b.hp,max:b.hp,d:[...b.d],coins:0,moved:false,moveDistance:0,usedDirs:Array(8).fill(0),rotation:0,attacked:false,attackTarget:null}}
 function inSetupZone(s,r){return s==='r'?r===5:r===0}
 function setupAdd(r,c){if(!inSetupZone(setupSide,r)||at(r,c)||setupPlaced[setupSide].length>=4)return;const own=setupPlaced[setupSide];if(own.some(p=>p.type===setupChoice))return;if(BASE[setupChoice].role==='キング'&&own.some(isKing))return;if(BASE[setupChoice].role!=='キング'&&!own.some(isKing))return;const p=makePiece(setupSide,setupChoice,r,c);pieces.push(p);own.push(p);if(isKing(p))draftAttribute=BASE[p.type].attribute;setupChoice=ROSTER.find(c=>c.role!=='キング').id;render();if(phase==='setup'&&window.matchMedia('(max-width:700px)').matches&&own.length<4)openMobilePicker()}
@@ -1639,12 +1660,12 @@ function tossDie(isCpu=false){
  const faces={1:[0,0],2:[-90,0],3:[0,-90],4:[0,90],5:[90,0],6:[0,180]};
  cube.style.setProperty('--dice-x',faces[number][0]+'deg');cube.style.setProperty('--dice-y',faces[number][1]+'deg');
  $('diceOverlay').hidden=false;cube.classList.remove('rolling');void cube.offsetWidth;cube.classList.add('rolling');
- setTimeout(()=>{if(epoch!==diceEpoch)return;$('diceResult').textContent='出目は '+number+'！';$('diceHint').textContent=number===6?'最大AP！ 大チャンス！':number===1?'回転のチャンス！':'AP '+number+' で勝負！';$('diceContinue').hidden=false;if(isCpu)setTimeout(()=>{if(epoch===diceEpoch&&!$('diceContinue').hidden)finishDie()},850)},2250);
+ setTimeout(()=>{if(epoch!==diceEpoch)return;$('diceResult').textContent='出目は '+number+'！';diceLandingCue(number);$('diceHint').textContent=number===6?'最大AP！ 大チャンス！':number===1?'回転のチャンス！':'AP '+number+' で勝負！';$('diceContinue').hidden=false;if(isCpu)setTimeout(()=>{if(epoch===diceEpoch&&!$('diceContinue').hidden)finishDie()},850)},2250);
 }
 function finishDie(){
  if(!dicePending||$('diceContinue').hidden)return;
  const {number,isCpu}=dicePending;dicePending=null;$('diceOverlay').hidden=true;ap=number;rolled=true;
- transientBattleText('yorozu-dice-splash','🎲 '+number+'!',950);rotationAvailable=ap===1;rotationUsed=false;
+ rotationAvailable=ap===1;rotationUsed=false;
  recordBattleStep('dice',{value:ap});
  logAction('🎲 '+(isCpu?'CPU':side==='r'?'赤軍':'青軍')+'の出目 '+ap,'turn');
  say(isCpu?'🤖 CPUの出目は '+ap+'！':ap===1?'出目は1！ 味方を選び、回転ボタンを何度でも押して向きを決められます（AP消費なし）':'出目は '+ap+'！ 行動開始！');
@@ -1799,11 +1820,11 @@ function showLevelUp(p,gainedCoins=1){
  for(let i=0;i<10;i++){const spark=document.createElement('i');spark.className='yorozu-level-spark';spark.style.setProperty('--a',(i*36)+'deg');el.append(spark)}
  document.body.append(el);setTimeout(()=>el.remove(),1700);
 }
-function cinematicImpact(attackerR,attackerC,targetR,targetC,defeated,damage){
+function cinematicImpact(attackerR,attackerC,targetR,targetC,defeated,damage,combo=1){
  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
  const cells=$('board').querySelectorAll('.cell'),src=cells[attackerR*6+attackerC],dst=cells[targetR*6+targetC];if(!src||!dst)return;
  const sr=src.getBoundingClientRect(),tr=dst.getBoundingClientRect(),dx=tr.left-sr.left,dy=tr.top-sr.top;
- const screen=document.createElement('div');screen.className='yorozu-impact-screen'+(defeated?' ko':'');
+ const screen=document.createElement('div');screen.className='yorozu-impact-screen'+(defeated?' ko':'')+(combo>=2?' combo-impact':'');
  screen.style.setProperty('--impact-x',(tr.left+tr.width/2)+'px');screen.style.setProperty('--impact-y',(tr.top+tr.height/2)+'px');
  document.body.append(screen);setTimeout(()=>screen.remove(),750);
  for(const [cell,kind] of [[src,'attacker'],[dst,'victim']]){
@@ -1816,13 +1837,27 @@ function cinematicImpact(attackerR,attackerC,targetR,targetC,defeated,damage){
  const caption=document.createElement('div');caption.className='yorozu-impact-caption';caption.style.left=(tr.left+tr.width/2)+'px';caption.style.top=(tr.top+tr.height/2)+'px';caption.textContent=defeated?'':damage>=3?'CRITICAL!':'HIT!';
  if(!defeated){document.body.append(caption);setTimeout(()=>caption.remove(),950)}
 }
+let lastComboTarget='',lastComboAttacker='',comboCount=0,lastComboTime=0;
+function registerBattleCombo(ar,ac,tr,tc){
+ const key=tr+','+tc,attacker=ar+','+ac,now=Date.now();
+ if(key===lastComboTarget&&attacker===lastComboAttacker&&now-lastComboTime<18000)comboCount=Math.min(9,comboCount+1);
+ else comboCount=1;
+ lastComboTarget=key;lastComboAttacker=attacker;lastComboTime=now;return comboCount;
+}
+function diceLandingCue(number){
+ const overlay=$('diceOverlay');overlay.classList.remove('yorozu-dice-landed');void overlay.offsetWidth;overlay.classList.add('yorozu-dice-landed');
+ setTimeout(()=>overlay.classList.remove('yorozu-dice-landed'),850);
+ if(number===6)gameSfx('diceSix');else gameSfx('land');
+}
 function showHitEffect(r,c,damage,bonus,flankBonus,defeated,defeatedImage,attackerR,attackerC){
- gameSfx('attack');if(defeated)setTimeout(()=>gameSfx('ko'),160);
+ const combo=registerBattleCombo(attackerR,attackerC,r,c);
+ gameSfx('attack');if(combo>=2)setTimeout(()=>gameSfx('attack'),combo>=3?115:160);
+ if(defeated)setTimeout(()=>gameSfx('ko'),240);
  // Keep hit feedback visible on mobile even when Reduce Motion is enabled.
  const cell=$('board').querySelectorAll('.cell')[r*6+c];if(!cell)return;
- cinematicImpact(attackerR,attackerC,r,c,defeated,damage);
+ cinematicImpact(attackerR,attackerC,r,c,defeated,damage,combo);
  const rect=cell.getBoundingClientRect(),overlay=document.createElement('div');
- overlay.className='hit-overlay';overlay.style.left=rect.left+'px';overlay.style.top=rect.top+'px';overlay.style.width=rect.width+'px';overlay.style.height=rect.height+'px';
+ overlay.className='hit-overlay combo-'+Math.min(combo,3);overlay.style.setProperty('--combo-power',String(Math.min(combo,3)));overlay.style.left=rect.left+'px';overlay.style.top=rect.top+'px';overlay.style.width=rect.width+'px';overlay.style.height=rect.height+'px';
  const flash=document.createElement('div');flash.className='hit-flash';
  const target=document.createElement('div');target.className='hit-target';
  const num=document.createElement('div');num.className='hit-number';num.textContent='−'+damage;
@@ -1841,13 +1876,14 @@ function showHitEffect(r,c,damage,bonus,flankBonus,defeated,defeatedImage,attack
  const board=$('board');board.classList.remove('yorozu-hit-shake');void board.offsetWidth;
  board.classList.add('yorozu-hit-shake');setTimeout(()=>board.classList.remove('yorozu-hit-shake'),440);
  const burst=document.createElement('div');burst.className='hit-burst';overlay.append(burst);
- for(let i=0;i<12;i++){
+ for(let i=0;i<12+Math.min(combo-1,2)*8;i++){
   const spark=document.createElement('i');spark.className='hit-spark';
-  spark.style.setProperty('--angle',(i*30)+'deg');
+  spark.style.setProperty('--angle',(i*360/(12+Math.min(combo-1,2)*8))+'deg');
   spark.style.setProperty('--length',(48+i%3*14)+'px');
   spark.style.animationDelay=(i%3*28)+'ms';
   overlay.append(spark);
  }
+ if(combo>=2&&!defeated){const comboTag=document.createElement('div');comboTag.className='yorozu-combo-tag';comboTag.textContent=combo>=3?'🔥 '+combo+' HIT COMBO!':'⚡ 2 HIT!';overlay.append(comboTag)}
  if(defeated){
   const finish=document.createElement('div');finish.className='hit-finish';finish.textContent='K.O.!';overlay.append(finish);
   if(defeatedImage){
@@ -1950,10 +1986,11 @@ function battleTurnCue(){
 }
 function kingFinishCue(){
  const el=document.createElement('div');el.className='yorozu-king-finish';
- const label=document.createElement('strong');label.textContent='👑 KING BREAK!';el.append(label);document.body.append(el);setTimeout(()=>el.remove(),1300);
+ const label=document.createElement('strong');label.textContent='👑 KING BREAK!';el.append(label);document.body.append(el);setTimeout(()=>el.remove(),1750);
 }
 function updateBattleHudVisuals(){
  const turn=$('turn'),apLabel=$('ap');if(!turn||!apLabel)return;
+ turn.textContent=side==='r'?'🔴 赤軍':'🔵 青軍';
  const bar=turn.parentElement;if(!bar)return;
  bar.classList.add('yorozu-duel-hud');bar.dataset.team=side==='r'?'red':'blue';
  let badge=bar.querySelector('.yorozu-duel-mark');if(!badge){badge=document.createElement('span');badge.className='yorozu-duel-mark';badge.setAttribute('aria-hidden','true');bar.prepend(badge)}
