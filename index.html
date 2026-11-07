@@ -1562,6 +1562,11 @@ function mountYorozuStatsDashboard(){
 .hit-overlay .hit-target{border-radius:50%!important}
 .yorozu-combat-actor.attacker{animation:yorozuSenderGlow 480ms ease-out both!important}
 .yorozu-combat-actor.victim{animation:yorozuReceiverGlow 540ms ease-out both!important}
+
+/* v3.5.4 remove all legacy blade-shaped impact components */
+.yorozu-attack-slash,.hit-spark{display:none!important}
+.yorozu-shot-dot{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:#e5ffff;box-shadow:0 0 9px 3px #85dfff;pointer-events:none;animation:yorozuShotDot 550ms ease-out forwards}
+@keyframes yorozuShotDot{0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}65%{opacity:.95}100%{opacity:0;transform:translate(calc(-50% + var(--dot-x)),calc(-50% + var(--dot-y))) scale(.3)}}
 </style>");
  document.body.insertAdjacentHTML('beforeend',"<button id=\"yorozuStatsOpen\" type=\"button\">🏆 戦績を見る</button>\n<div id=\"yorozuStatsModal\" hidden role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"yorozuStatsTitle\"><div class=\"stats-window\">\n<div class=\"stats-top\"><h2 id=\"yorozuStatsTitle\">🏆 ヨロズモン戦績</h2><button id=\"yorozuStatsClose\" class=\"stats-close\" type=\"button\">✕ 閉じる</button></div>\n<p class=\"stats-note\">この端末・ブラウザに保存された対戦履歴です。Supabaseに保存された全件の集計ではありません。</p>\n<div class=\"stats-grid\"><div class=\"stats-tile\"><strong id=\"ysTotal\">0</strong><span>総対戦数</span></div><div class=\"stats-tile\"><strong id=\"ysWins\">0</strong><span>赤軍の勝利</span></div><div class=\"stats-tile\"><strong id=\"ysRate\">—</strong><span>赤軍の勝率</span></div></div>\n<div class=\"stats-section\"><h3>🎮 CPU戦の成績</h3><div id=\"ysCpu\"></div></div>\n<div class=\"stats-section\"><h3>📜 最近の対戦</h3><div id=\"ysRecent\"></div></div>\n</div></div>");
  const modal=$('yorozuStatsModal');
@@ -1936,7 +1941,7 @@ function showHitEffect(r,c,damage,bonus,flankBonus,defeated,defeatedImage,attack
  const target=document.createElement('div');target.className='hit-target';
  const num=document.createElement('div');num.className='hit-number';num.textContent='−'+damage;
  overlay.append(flash,target,num);
- // A slash travels in from the attacking piece. The overlay is fixed, so
+ // A pulse travels from the sending piece. The overlay is fixed, so
  // it never changes board geometry or intercepts taps.
  const sourceCell=Number.isInteger(attackerR)&&Number.isInteger(attackerC)?$('board').querySelectorAll('.cell')[attackerR*6+attackerC]:null;
  const from=sourceCell?.getBoundingClientRect();
@@ -1952,13 +1957,14 @@ function showHitEffect(r,c,damage,bonus,flankBonus,defeated,defeatedImage,attack
  const shock=document.createElement('div');shock.className='yorozu-impact-ring';overlay.append(shock);
  const board=$('board');board.classList.remove('yorozu-hit-shake');void board.offsetWidth;
  board.classList.add('yorozu-hit-shake');setTimeout(()=>board.classList.remove('yorozu-hit-shake'),440);
+ // Round pulse particles only: no elongated directional sparks.
  const burst=document.createElement('div');burst.className='hit-burst';overlay.append(burst);
- for(let i=0;i<12+Math.min(combo-1,2)*8;i++){
-  const spark=document.createElement('i');spark.className='hit-spark';
-  spark.style.setProperty('--angle',(i*360/(12+Math.min(combo-1,2)*8))+'deg');
-  spark.style.setProperty('--length',(48+i%3*14)+'px');
-  spark.style.animationDelay=(i%3*28)+'ms';
-  overlay.append(spark);
+ for(let i=0;i<10+Math.min(combo-1,2)*5;i++){
+  const dot=document.createElement('i');dot.className='yorozu-shot-dot';
+  const angle=(i*2*Math.PI)/(10+Math.min(combo-1,2)*5);
+  dot.style.setProperty('--dot-x',Math.round(Math.cos(angle)*(34+i%3*9))+'px');
+  dot.style.setProperty('--dot-y',Math.round(Math.sin(angle)*(34+i%3*9))+'px');
+  dot.style.animationDelay=(i%3*25)+'ms';overlay.append(dot);
  }
  if(combo>=2&&!defeated){const comboTag=document.createElement('div');comboTag.className='yorozu-combo-tag';comboTag.textContent=combo>=3?'🔥 '+combo+' HIT COMBO!':'⚡ 2 HIT!';overlay.append(comboTag)}
  if(defeated){
