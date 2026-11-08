@@ -1416,6 +1416,8 @@ body.setup-screen.picker-open{overflow-x:hidden!important;overflow-y:auto!import
 72%{transform:translate3d(0,-13px,0) scale(1.07) rotate(0)}
 100%{transform:translate3d(0,0,0) scale(1) rotate(0)}
 }
+</style><style>/* mobile deployment drag preview: transform-only, no board rerender during move */
+@media(max-width:700px){#deploymentStrip .deployment-draggable{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important}#deploymentStrip .deployment-drag-source{opacity:.32!important} .deployment-drag-ghost{box-shadow:0 10px 24px #0009!important;border-color:#ffe48c!important;will-change:transform!important} .deployment-drag-ghost img{pointer-events:none!important}}
 </style></head><body><div id="yorozuFront" aria-label="万物大戦 タイトル画面">
 <div class="front-rays"></div><div class="front-stage"><div id="yorozuStart" class="front-start"><img src="./yorozu-logo.png" alt="ヨロズモン"><button id="yorozuStartButton" type="button">▶ タップしてスタート</button><p>音楽とともにオープニングが始まります</p></div>
 <div id="yorozuIntro" class="front-intro" hidden><button id="yorozuSkip" class="intro-skip">スキップ ▶</button><div id="openingLyrics" class="opening-lyrics" aria-live="off"></div></div>
@@ -1895,8 +1897,13 @@ function renderDeploymentStrip(){const strip=$('deploymentStrip');if(!strip)retu
  cell.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',String(c));e.dataTransfer.effectAllowed='move'});
  cell.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move'});
  cell.addEventListener('drop',e=>{e.preventDefault();const from=Number(e.dataTransfer.getData('text/plain'));swapDeployment(from,c)});
- if(p)cell.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;cell.setPointerCapture(e.pointerId);cell.dataset.dragStart=String(c)});
- cell.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'||cell.dataset.dragStart===undefined)return;const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('.deployment-cell');delete cell.dataset.dragStart;if(hit&&hit!==cell)swapDeployment(c,Number(hit.dataset.col))});
+ if(p){cell.classList.add('deployment-draggable');let gesture=null;
+ cell.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||!e.isPrimary)return;const rect=cell.getBoundingClientRect();gesture={id:e.pointerId,startX:e.clientX,startY:e.clientY,rect,moved:false,ghost:null};cell.setPointerCapture(e.pointerId)});
+ cell.addEventListener('pointermove',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;const dx=e.clientX-g.startX;if(!g.moved&&Math.abs(dx)<7)return;if(!g.moved){g.moved=true;const ghost=cell.cloneNode(true);ghost.classList.add('deployment-drag-ghost');ghost.removeAttribute('id');ghost.style.cssText='position:fixed!important;left:'+g.rect.left+'px!important;top:'+g.rect.top+'px!important;width:'+g.rect.width+'px!important;height:'+g.rect.height+'px!important;transform:translate3d(0,0,0) scale(1.06)!important;pointer-events:none!important;z-index:20000!important;transition:none!important;';document.body.append(ghost);g.ghost=ghost;cell.classList.add('deployment-drag-source')}g.ghost.style.transform='translate3d('+dx+'px,0,0) scale(1.06)';});
+ const finish=e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;gesture=null;g.ghost?.remove();cell.classList.remove('deployment-drag-source');if(g.moved){const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('.deployment-cell');if(hit&&hit!==cell&&hit.closest('#deploymentStrip'))swapDeployment(c,Number(hit.dataset.col));cell.dataset.suppressClick='1';setTimeout(()=>delete cell.dataset.suppressClick,150)}};
+ cell.addEventListener('pointerup',finish);cell.addEventListener('pointercancel',e=>{const g=gesture;if(g&&g.id===e.pointerId){g.ghost?.remove();cell.classList.remove('deployment-drag-source');gesture=null}});
+ cell.addEventListener('click',e=>{if(cell.dataset.suppressClick){e.preventDefault();e.stopImmediatePropagation()}},true);
+}
  }
  cell.dataset.col=String(c);cell.addEventListener('click',()=>click(row,c));strip.append(cell)}}
 const FAVORITES_KEY='yorozumon-favorites-v1';
