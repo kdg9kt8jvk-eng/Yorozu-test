@@ -1364,6 +1364,20 @@ body.battle-screen .game-side-column>.actions .yorozu-roll-row .yorozu-mobile-ap
 body.battle-screen .game-side-column>.actions .yorozu-roll-row #roll[hidden]{display:none!important}
 }
 @keyframes yorozuMobileActor{0%{opacity:0;transform:translate(-50%,-50%) scale(.65);filter:blur(4px)}12%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:none}62%{opacity:1;transform:translate(-50%,-50%) scale(1.2);filter:none}84%{opacity:1;transform:translate(-50%,-50%) scale(1.35);filter:none}100%{opacity:0;transform:translate(-50%,-50%) scale(1.6);filter:none}}
+</style><style>/* mobile refinement: preserve desktop battle AP meter */
+@media(max-width:700px){
+body.setup-screen .setup-stage-board #yorozuBrand,
+body.setup-screen #yorozuBrand,
+body.setup-screen .setup-stage-board .yorozu-brand,
+body.setup-screen .setup-stage-board .yorozu-brand img{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;margin:0!important;padding:0!important}
+body.setup-screen .setup-stage-board{min-height:0!important}
+body.battle-screen .yorozu-mobile-ap{display:none!important}
+body.battle-screen .game-side-column>.actions .yorozu-roll-row{display:block!important;grid-column:1/-1!important}
+body.battle-screen .game-side-column>.actions .yorozu-roll-row #roll{width:100%!important}
+body.battle-screen .game-side-column .yorozu-duel-hud{display:grid!important;min-height:65px!important;margin:3px 0!important;padding:6px 9px!important}
+body.battle-screen .game-side-column .yorozu-ap-meter{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}
+body.battle-screen .game-side-column .yorozu-ap-pip{height:12px!important}
+}
 </style></head><body><div id="yorozuFront" aria-label="万物大戦 タイトル画面">
 <div class="front-rays"></div><div class="front-stage"><div id="yorozuStart" class="front-start"><img src="./yorozu-logo.png" alt="ヨロズモン"><button id="yorozuStartButton" type="button">▶ タップしてスタート</button><p>音楽とともにオープニングが始まります</p></div>
 <div id="yorozuIntro" class="front-intro" hidden><button id="yorozuSkip" class="intro-skip">スキップ ▶</button><div id="openingLyrics" class="opening-lyrics" aria-live="off"></div></div>
@@ -1411,7 +1425,7 @@ const battleTurnOriginalNext=battleTurnHeader.nextSibling;
 function placeMobileBattleHeader(){
  const mobile=window.matchMedia('(max-width:700px)').matches;
  if(mobile&&phase==='battle'){
-  if(battleTurnHeader.parentElement!==boardColumn)boardColumn.insertBefore(battleTurnHeader,boardViewport);
+  if(battleTurnHeader.parentElement!==sideColumn||battleTurnHeader.nextElementSibling!==battleActions)sideColumn.insertBefore(battleTurnHeader,battleActions);
   battleTurnHeader.classList.add('battle-turn-header');
  }else{
   const desktopDock=window.matchMedia('(min-width:1001px)').matches&&phase==='battle';
@@ -2576,8 +2590,8 @@ function playTitleBoom(){
  }catch(e){}
 }
 function showTitle(){if(!active)return;playTitleBoom();stop(false);intro.hidden=true;title.hidden=false;title.classList.remove('logo-impact');void title.offsetWidth;title.classList.add('logo-impact');const flash=document.createElement('div');flash.className='logo-impact-flash';title.append(flash);setTimeout(()=>flash.remove(),900);setTimeout(()=>title.classList.remove('logo-impact'),1500)}
-function actor(){if(!active||!openingFiles.length)return;const src=openingFiles[Math.floor(Math.random()*openingFiles.length)],img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./'+src;img.onerror=()=>{img.onerror=null;img.remove();console.warn('オープニング画像を読み込めません:',src)};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),5900)}
-function play(){stop();title.classList.remove('logo-impact');document.getElementById('yorozuStart').hidden=true;active=true;title.hidden=true;intro.hidden=false;openingStart=performance.now();lyricClock=setInterval(updateLyrics,80);updateLyrics();actor();interval=setInterval(actor,2500);timer=setTimeout(showTitle,76500);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
+function actor(){if(!active||!openingFiles.length)return;const src=openingFiles[Math.floor(Math.random()*openingFiles.length)],img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./'+src;img.onerror=()=>{img.onerror=null;img.remove();console.warn('オープニング画像を読み込めません:',src)};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),5700)}
+function play(){stop();title.classList.remove('logo-impact');document.getElementById('yorozuStart').hidden=true;active=true;title.hidden=true;intro.hidden=false;openingStart=performance.now();lyricClock=setInterval(updateLyrics,80);updateLyrics();actor();interval=setInterval(actor,5900);timer=setTimeout(showTitle,76500);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
 function start(mode){stop();intro.hidden=true;title.hidden=false;front.hidden=true;const selector=document.getElementById('gameMode');if(selector){selector.value=mode;selector.dispatchEvent(new Event('change',{bubbles:true}))}window.scrollTo(0,0)}
 document.getElementById('yorozuSkip').addEventListener('click',e=>{e.stopPropagation();showTitle()});
 intro.addEventListener('click',showTitle);
