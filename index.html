@@ -1392,6 +1392,16 @@ body.setup-screen.picker-open{overflow-x:hidden!important;overflow-y:auto!import
 88%{opacity:1;transform:translate(-50%,-50%) scale(1.12);filter:none}
 100%{opacity:0;transform:translate(-50%,-50%) scale(1.55);filter:none}
 }
+</style><style>/* 2026-11-08: continuously moving opening, no repeated characters per cycle */
+@media(max-width:700px){#yorozuFront .intro-actor{animation:yorozuContinuousActor 5.7s linear forwards!important}}
+@keyframes yorozuContinuousActor{
+0%{opacity:0;transform:translate(-50%,-50%) scale(.55);filter:blur(2px)}
+12%{opacity:1;transform:translate(-50%,-50%) scale(.85);filter:none}
+35%{opacity:1;transform:translate(-50%,-50%) scale(1.03);filter:none}
+65%{opacity:1;transform:translate(-50%,-50%) scale(1.24);filter:none}
+82%{opacity:.9;transform:translate(-50%,-50%) scale(1.48);filter:none}
+100%{opacity:0;transform:translate(-50%,-50%) scale(2.15);filter:blur(3px)}
+}
 </style></head><body><div id="yorozuFront" aria-label="万物大戦 タイトル画面">
 <div class="front-rays"></div><div class="front-stage"><div id="yorozuStart" class="front-start"><img src="./yorozu-logo.png" alt="ヨロズモン"><button id="yorozuStartButton" type="button">▶ タップしてスタート</button><p>音楽とともにオープニングが始まります</p></div>
 <div id="yorozuIntro" class="front-intro" hidden><button id="yorozuSkip" class="intro-skip">スキップ ▶</button><div id="openingLyrics" class="opening-lyrics" aria-live="off"></div></div>
@@ -2572,7 +2582,7 @@ mountSoundSettings();
 const front=document.getElementById('yorozuFront'),intro=document.getElementById('yorozuIntro'),title=document.getElementById('yorozuTitle');
 if(!front)return;
 const openingFiles=(Array.isArray(window.YOROZUMON_OPENING_CHARACTERS)?window.YOROZUMON_OPENING_CHARACTERS:[]).filter(Boolean);
-let timer=null,interval=null,active=false;
+let timer=null,interval=null,active=false;let openingQueue=[];let openingCursor=0;function shuffleOpening(){openingQueue=[...new Set(openingFiles)];for(let i=openingQueue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[openingQueue[i],openingQueue[j]]=[openingQueue[j],openingQueue[i]]}openingCursor=0}function nextOpening(){if(openingCursor>=openingQueue.length)shuffleOpening();return openingQueue[openingCursor++]}
 const music=new Audio('./audio/yorozumon-op.m4a');music.preload='auto';music.volume=.35;
 const titleVolumeKey='yorozu-title-volume-v1';
 let titleVolume=35;try{const saved=localStorage.getItem(titleVolumeKey);if(saved!==null)titleVolume=Math.max(0,Math.min(100,Number(saved)||0))}catch(e){}
@@ -2604,8 +2614,8 @@ function playTitleBoom(){
  }catch(e){}
 }
 function showTitle(){if(!active)return;playTitleBoom();stop(false);intro.hidden=true;title.hidden=false;title.classList.remove('logo-impact');void title.offsetWidth;title.classList.add('logo-impact');const flash=document.createElement('div');flash.className='logo-impact-flash';title.append(flash);setTimeout(()=>flash.remove(),900);setTimeout(()=>title.classList.remove('logo-impact'),1500)}
-function actor(){if(!active||!openingFiles.length)return;const src=openingFiles[Math.floor(Math.random()*openingFiles.length)],img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./'+src;img.onerror=()=>{img.onerror=null;img.remove();console.warn('オープニング画像を読み込めません:',src)};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),5700)}
-function play(){stop();title.classList.remove('logo-impact');document.getElementById('yorozuStart').hidden=true;active=true;title.hidden=true;intro.hidden=false;openingStart=performance.now();lyricClock=setInterval(updateLyrics,80);updateLyrics();actor();interval=setInterval(actor,5900);timer=setTimeout(showTitle,76500);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
+function actor(){if(!active||!openingFiles.length)return;const src=nextOpening(),img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./'+src;img.onerror=()=>{img.onerror=null;img.remove();console.warn('オープニング画像を読み込めません:',src)};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),5700)}
+function play(){stop();shuffleOpening();title.classList.remove('logo-impact');document.getElementById('yorozuStart').hidden=true;active=true;title.hidden=true;intro.hidden=false;openingStart=performance.now();lyricClock=setInterval(updateLyrics,80);updateLyrics();actor();interval=setInterval(actor,5900);timer=setTimeout(showTitle,76500);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
 function start(mode){stop();intro.hidden=true;title.hidden=false;front.hidden=true;const selector=document.getElementById('gameMode');if(selector){selector.value=mode;selector.dispatchEvent(new Event('change',{bubbles:true}))}window.scrollTo(0,0)}
 document.getElementById('yorozuSkip').addEventListener('click',e=>{e.stopPropagation();showTitle()});
 intro.addEventListener('click',showTitle);
