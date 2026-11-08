@@ -1378,6 +1378,20 @@ body.battle-screen .game-side-column .yorozu-duel-hud{display:grid!important;min
 body.battle-screen .game-side-column .yorozu-ap-meter{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}
 body.battle-screen .game-side-column .yorozu-ap-pip{height:12px!important}
 }
+</style><style>/* mobile: single smooth character motion, inline selection */
+@media(max-width:700px){
+#yorozuFront .intro-actor{animation:yorozuMobileSmooth 5.7s linear forwards!important;will-change:transform,opacity!important}
+body.setup-screen .picker-shade{display:none!important;pointer-events:none!important}
+body.setup-screen .game-side-column #setupPanel:not([hidden]){position:static!important;display:block!important;inset:auto!important;overflow:visible!important;box-shadow:none!important}
+body.setup-screen.picker-open{overflow-x:hidden!important;overflow-y:auto!important}
+}
+@keyframes yorozuMobileSmooth{
+0%{opacity:0;transform:translate(-50%,-50%) scale(.85);filter:none}
+12%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:none}
+70%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:none}
+88%{opacity:1;transform:translate(-50%,-50%) scale(1.12);filter:none}
+100%{opacity:0;transform:translate(-50%,-50%) scale(1.55);filter:none}
+}
 </style></head><body><div id="yorozuFront" aria-label="万物大戦 タイトル画面">
 <div class="front-rays"></div><div class="front-stage"><div id="yorozuStart" class="front-start"><img src="./yorozu-logo.png" alt="ヨロズモン"><button id="yorozuStartButton" type="button">▶ タップしてスタート</button><p>音楽とともにオープニングが始まります</p></div>
 <div id="yorozuIntro" class="front-intro" hidden><button id="yorozuSkip" class="intro-skip">スキップ ▶</button><div id="openingLyrics" class="opening-lyrics" aria-live="off"></div></div>
@@ -1752,7 +1766,7 @@ function win(s,reason){if(winner)return;winner=s;recordMatch(s,reason);
  else showFinale(s,reason);logAction('🏆 '+(s==='r'?'赤軍':'青軍')+'勝利：'+reason,'turn');say((s==='r'?'🔴 赤軍':'🔵 青軍')+'の勝利！🏆 '+reason)}
 function makePiece(s,t,r,c){const b=BASE[t];return {id:s+'-'+setupPlaced[s].length,side:s,type:t,r,c,hp:b.hp,max:b.hp,d:[...b.d],coins:0,moved:false,moveDistance:0,usedDirs:Array(8).fill(0),rotation:0,attacked:false,attackTarget:null}}
 function inSetupZone(s,r){return s==='r'?r===5:r===0}
-function setupAdd(r,c){if(!inSetupZone(setupSide,r)||at(r,c)||setupPlaced[setupSide].length>=4)return;const own=setupPlaced[setupSide];if(own.some(p=>p.type===setupChoice))return;if(BASE[setupChoice].role==='キング'&&own.some(isKing))return;if(BASE[setupChoice].role!=='キング'&&!own.some(isKing))return;const p=makePiece(setupSide,setupChoice,r,c);pieces.push(p);own.push(p);if(isKing(p))draftAttribute=BASE[p.type].attribute;setupChoice=ROSTER.find(c=>c.role!=='キング').id;render();if(phase==='setup'&&window.matchMedia('(max-width:700px)').matches&&own.length<4)openMobilePicker()}
+function setupAdd(r,c){if(!inSetupZone(setupSide,r)||at(r,c)||setupPlaced[setupSide].length>=4)return;const own=setupPlaced[setupSide];if(own.some(p=>p.type===setupChoice))return;if(BASE[setupChoice].role==='キング'&&own.some(isKing))return;if(BASE[setupChoice].role!=='キング'&&!own.some(isKing))return;const p=makePiece(setupSide,setupChoice,r,c);pieces.push(p);own.push(p);if(isKing(p))draftAttribute=BASE[p.type].attribute;setupChoice=ROSTER.find(c=>c.role!=='キング').id;render();/* mobile setup stays inline; no modal interruption */}
 function setupRemoveLast(){const p=setupPlaced[setupSide].pop();if(!p)return;pieces=pieces.filter(x=>x!==p);setupChoice=p.type;if(isKing(p))draftAttribute='';render()}
 function setupClearSide(){const own=new Set(setupPlaced[setupSide]);pieces=pieces.filter(p=>!own.has(p));setupPlaced[setupSide]=[];setupChoice=ROSTER.find(c=>c.role==='キング').id;draftAttribute='';render()}
 let diceEpoch=0,dicePending=null;
