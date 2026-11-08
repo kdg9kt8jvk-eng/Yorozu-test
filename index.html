@@ -1326,6 +1326,33 @@ body.setup-screen:after{background:linear-gradient(90deg,#24132788 0%,transparen
 body.setup-screen .setup-stage{isolation:isolate}
 body.setup-screen .setup-stage:after{content:"";position:absolute;z-index:-1;inset:0 -1% 0;pointer-events:none;background:radial-gradient(ellipse at 50% 90%,#f9b75545 0%,transparent 43%),repeating-linear-gradient(90deg,transparent 0 11%,#d8c5ff0b 11% 11.5%,transparent 11.5% 22%);border-radius:30px}
 @media(max-width:650px){body.setup-screen .setup-stage-board{min-height:315px!important}body.setup-screen .setup-stage-board #yorozuBrand{min-height:130px!important}body.setup-screen .setup-stage-board #yorozuBrand img{max-height:125px!important}}
+</style><style>
+/* Mobile UI hotfix 2026-11-08: PC untouched */
+@media(max-width:700px){
+ html,body{max-width:100%;overflow-x:hidden}
+ #yorozuFront .opening-lyrics{left:1%!important;right:1%!important;font-size:clamp(13px,4.35vw,27px)!important;line-height:1.25!important;white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;-webkit-text-stroke:1.5px #231209!important}
+ body.setup-screen #yorozuBrand,body.battle-screen #yorozuBrand,body.setup-screen .setup-stage-board>.yorozu-brand,body.battle-screen .yorozu-brand{display:none!important;min-height:0!important}
+ body.setup-screen .app,body.battle-screen .app,body.setup-screen .setup-stage,body.setup-screen .setup-stage-roster,body.setup-screen .setup-stage-board,body.setup-screen .setup-stage-preview{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ body.setup-screen .setup-stage{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:6px!important;margin:4px auto!important;padding:4px!important}
+ body.setup-screen .setup-stage-board{min-height:0!important;padding:4px!important}
+ body.setup-screen .setup-stage-roster{overflow:hidden!important}
+ body.setup-screen .setup-stage-roster #setupRoster{display:flex!important;flex-wrap:nowrap!important;max-width:100%!important;width:100%!important;min-width:0!important;max-height:185px!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain!important;touch-action:pan-x!important;-webkit-overflow-scrolling:touch!important}
+ body.setup-screen .setup-stage-roster #setupRoster .draft-card{flex:0 0 132px!important;min-width:132px!important;max-width:132px!important;min-height:150px!important;box-sizing:border-box!important}
+ body.setup-screen .draft-attribute-tabs{max-width:100%!important;overflow-x:auto!important;touch-action:pan-x!important;overscroll-behavior-x:contain!important}
+ body.setup-screen .setup-stage-preview #draftImage{min-height:0!important;max-height:190px!important;overflow:hidden!important}
+ body.setup-screen .setup-stage-preview #draftImage .sticker-overlay-frame{max-height:180px!important;max-width:180px!important;width:min(100%,180px)!important}
+ body.setup-screen .setup-stage-preview #draftImage img{max-height:180px!important;object-fit:contain!important}
+ body.battle-screen .game-workspace{gap:4px!important}
+ body.battle-screen .game-board-column{margin:0!important}
+ body.battle-screen .game-side-column{gap:5px!important}
+ body.battle-screen .game-side-column>.actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:5px!important;padding:5px!important}
+ body.battle-screen #roll{min-height:40px!important;height:42px!important;padding:5px 8px!important;font-size:14px!important;grid-column:1!important;width:100%!important}
+ body.battle-screen .yorozu-mobile-ap{grid-column:2!important;grid-row:1!important;display:flex!important;align-items:center;justify-content:center;border:1px solid #ffd37b;border-radius:9px;background:#1c263c;color:#ffe39c;font-weight:900;font-size:15px;white-space:nowrap}
+ body.battle-screen .game-side-column>.character-panel{padding:6px!important}
+ body.battle-screen .game-side-column .character-panel .sticker-detail{max-height:150px!important}
+ body.battle-screen .game-side-column .character-panel .sticker-detail img{max-height:115px!important}
+ .selection-volume{max-width:60vw!important;font-size:12px!important;gap:4px!important}
+}
 </style></head><body><div id="yorozuFront" aria-label="万物大戦 タイトル画面">
 <div class="front-rays"></div><div class="front-stage"><div id="yorozuStart" class="front-start"><img src="./yorozu-logo.png" alt="ヨロズモン"><button id="yorozuStartButton" type="button">▶ タップしてスタート</button><p>音楽とともにオープニングが始まります</p></div>
 <div id="yorozuIntro" class="front-intro" hidden><button id="yorozuSkip" class="intro-skip">スキップ ▶</button><div id="openingLyrics" class="opening-lyrics" aria-live="off"></div></div>
@@ -2505,7 +2532,7 @@ mountSoundSettings();
 'use strict';
 const front=document.getElementById('yorozuFront'),intro=document.getElementById('yorozuIntro'),title=document.getElementById('yorozuTitle');
 if(!front)return;
-const openingFiles=Array.from({length:94},(_,i)=>`opening-characters/yorozuOP${i+1}.webp`);
+const openingFiles=(Array.isArray(window.YOROZUMON_OPENING_CHARACTERS)?window.YOROZUMON_OPENING_CHARACTERS:[]).filter(Boolean);
 let timer=null,interval=null,active=false;
 const music=new Audio('./audio/yorozumon-op.m4a');music.preload='auto';music.volume=.35;
 const titleVolumeKey='yorozu-title-volume-v1';
@@ -2579,4 +2606,4 @@ document.getElementById('yorozuStartButton').addEventListener('click',play);
  const titleScreen=document.getElementById('yorozuTitleScreen')||document.querySelector('.yorozu-title-screen');
  if(titleScreen){const button=document.createElement('button');button.type='button';button.textContent='📖 遊び方';button.className='yorozu-tutorial-title-button';button.addEventListener('click',open);titleScreen.append(button)}
 })();
-</script></body></html>
+</script><script>/* mobile AP mirror; existing AP remains authoritative */(function(){const roll=document.getElementById('roll'),ap=document.getElementById('ap');if(!roll||!ap)return;const host=roll.parentElement;const badge=document.createElement('span');badge.className='yorozu-mobile-ap';badge.setAttribute('aria-live','polite');badge.textContent='残り '+ap.textContent;roll.insertAdjacentElement('afterend',badge);const sync=()=>{badge.textContent='残り '+ap.textContent.replace(/^AP\\s*/,'AP ')};new MutationObserver(sync).observe(ap,{childList:true,characterData:true,subtree:true});sync();})();</script></body></html>
