@@ -1402,6 +1402,20 @@ body.setup-screen.picker-open{overflow-x:hidden!important;overflow-y:auto!import
 82%{opacity:.9;transform:translate(-50%,-50%) scale(1.48);filter:none}
 100%{opacity:0;transform:translate(-50%,-50%) scale(2.15);filter:blur(3px)}
 }
+</style><style>/* mobile title transition: retain PC slam timing, reduce iOS compositing stalls */
+@media(max-width:700px){
+#yorozuFront .front-title.logo-impact{animation:yorozuImpactShake .48s ease-out both!important}
+#yorozuFront .front-title.logo-impact .front-logo{animation:yorozuMobileLogoSlam .95s cubic-bezier(.18,.9,.35,1) both!important;will-change:transform,opacity;backface-visibility:hidden;filter:none!important}
+#yorozuFront .front-title.logo-impact h2,#yorozuFront .front-title.logo-impact .front-menu,#yorozuFront .front-title.logo-impact .front-audio{animation:yorozuMenuReveal .48s ease-out .82s both!important}
+#yorozuFront .logo-impact-flash{background:radial-gradient(circle,#fffbe5 0%,#ffe477 28%,#ffae3477 55%,transparent 75%)!important}
+}
+@keyframes yorozuMobileLogoSlam{
+0%{transform:translate3d(0,-65vh,0) scale(2.7) rotate(-8deg);opacity:0}
+44%{transform:translate3d(0,0,0) scale(1.23) rotate(2deg);opacity:1}
+56%{transform:translate3d(0,0,0) scale(.87) rotate(-1deg)}
+72%{transform:translate3d(0,-13px,0) scale(1.07) rotate(0)}
+100%{transform:translate3d(0,0,0) scale(1) rotate(0)}
+}
 </style></head><body><div id="yorozuFront" aria-label="万物大戦 タイトル画面">
 <div class="front-rays"></div><div class="front-stage"><div id="yorozuStart" class="front-start"><img src="./yorozu-logo.png" alt="ヨロズモン"><button id="yorozuStartButton" type="button">▶ タップしてスタート</button><p>音楽とともにオープニングが始まります</p></div>
 <div id="yorozuIntro" class="front-intro" hidden><button id="yorozuSkip" class="intro-skip">スキップ ▶</button><div id="openingLyrics" class="opening-lyrics" aria-live="off"></div></div>
@@ -2613,7 +2627,7 @@ function playTitleBoom(){
  o.connect(g);g.connect(boomContext.destination);o.start(now);o.stop(now+.67);
  }catch(e){}
 }
-function showTitle(){if(!active)return;playTitleBoom();stop(false);intro.hidden=true;title.hidden=false;title.classList.remove('logo-impact');void title.offsetWidth;title.classList.add('logo-impact');const flash=document.createElement('div');flash.className='logo-impact-flash';title.append(flash);setTimeout(()=>flash.remove(),900);setTimeout(()=>title.classList.remove('logo-impact'),1500)}
+function showTitle(){if(!active)return;stop(false);intro.hidden=true;title.hidden=false;title.classList.remove('logo-impact');title.querySelectorAll('.logo-impact-flash').forEach(el=>el.remove());requestAnimationFrame(()=>{requestAnimationFrame(()=>{title.classList.add('logo-impact');playTitleBoom();const flash=document.createElement('div');flash.className='logo-impact-flash';title.append(flash);setTimeout(()=>flash.remove(),900);setTimeout(()=>title.classList.remove('logo-impact'),1500)})})}
 function actor(){if(!active||!openingFiles.length)return;const src=nextOpening(),img=document.createElement('img');img.className='intro-actor';img.alt='';img.src='./'+src;img.onerror=()=>{img.onerror=null;img.remove();console.warn('オープニング画像を読み込めません:',src)};const directions=[[-38,-12,-16],[38,-8,17],[-24,22,-10],[28,16,12],[0,-15,0]];const d=directions[Math.floor(Math.random()*directions.length)];img.style.setProperty('--tx',d[0]+'vw');img.style.setProperty('--ty',d[1]+'vh');img.style.setProperty('--rot',d[2]+'deg');intro.append(img);setTimeout(()=>img.remove(),5700)}
 function play(){stop();shuffleOpening();title.classList.remove('logo-impact');document.getElementById('yorozuStart').hidden=true;active=true;title.hidden=true;intro.hidden=false;openingStart=performance.now();lyricClock=setInterval(updateLyrics,80);updateLyrics();actor();interval=setInterval(actor,5900);timer=setTimeout(showTitle,76500);const p=music.play();if(p&&p.catch)p.catch(()=>{})}
 function start(mode){stop();intro.hidden=true;title.hidden=false;front.hidden=true;const selector=document.getElementById('gameMode');if(selector){selector.value=mode;selector.dispatchEvent(new Event('change',{bubbles:true}))}window.scrollTo(0,0)}
